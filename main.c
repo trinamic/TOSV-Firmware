@@ -7,6 +7,7 @@
 
 #include "hal/system/Cpu.h"
 #include "hal/system/SysTick.h"
+#include "hal/comm/SPI.h"
 #include "BLDC.h"
 #include "TMCL.h"
 
@@ -27,9 +28,12 @@ int main(void)
 
 	// initialize periphery
 	tmcm_initModuleSpecificIO();
+	tmcm_initModuleSpecificADC();
 
 	// initialize hal functionality
 	systick_init();
+
+	spi_init();
 
 	// initialize communication interfaces
 #ifdef USE_USB_INTERFACE
@@ -39,6 +43,9 @@ int main(void)
 	// initialize software
 	tmcl_init();
 	bldc_init();
+
+	// initialize ICs
+	tmcm_updateConfig();
 
 	for(;;)
 	{

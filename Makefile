@@ -99,6 +99,7 @@ endif
 # hal parts
 SRC += hal/system/Cpu.c
 SRC += hal/system/SysTick.c
+SRC += hal/comm/SPI.c
 SRC += hal/comm/USB.c
 SRC += hal/Flags.c
 
@@ -106,6 +107,12 @@ SRC += hal/Flags.c
 SRC += TMCL.c
 SRC += BLDC.c
 SRC += main.c
+
+# TMC_API
+SRC += TMC-API/tmc/helpers/Functions.c
+SRC += TMC-API/tmc/ramp/LinearRamp.c
+SRC	+= TMC-API/tmc/ic/TMC4671/TMC4671.c
+SRC	+= TMC-API/tmc/ic/TMC6200/TMC6200.c
 
 # List C source files here which must be compiled in ARM-Mode (no -mthumb).
 # use file-extension c for "c-only"-files
@@ -129,6 +136,8 @@ ASRCARM =
 #EXTRAINCDIRS  = $(CPU_INC_DIR)
 EXTRAINCDIRS += ./hal
 EXTRAINCDIRS += ./tmc
+EXTRAINCDIRS  += ./TMC-API
+EXTRAINCDIRS  += ./TMC-API/tmc/helpers
 
 # List any extra directories to look for library files here.
 # Also add directories where the linker should search for

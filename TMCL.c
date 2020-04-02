@@ -7,6 +7,7 @@
 
 #include "TMCL.h"
 #include "hal/system/SysTick.h"
+#include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
 #include <stdlib.h>
 
@@ -26,9 +27,23 @@
 	void tmcl_rotateRight();
 	void tmcl_motorStop();
 	void tmcl_handleAxisParameter(uint8_t command);
+	void tmcl_setOutput();
+	void tmcl_getInput();
 	void tmcl_getVersion();
 	void tmcl_boot();
 	void tmcl_softwareReset();
+
+// => SPI wrapper for TMC-API
+u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
+{
+	return weasel_spi_readWriteByte(motor, data, lastTransfer);
+}
+
+u8 tmc6200_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
+{
+	return dragon_spi_readWriteByte(motor, data, lastTransfer);
+}
+// <= SPI wrapper
 
 /* execute the TMCL-Command stored in "ActualCommand" */
 void tmcl_executeActualCommand()
@@ -56,9 +71,27 @@ void tmcl_executeActualCommand()
     	case TMCL_RSAP:
     		tmcl_handleAxisParameter(ActualCommand.Opcode);
     		break;
+        case TMCL_SIO:
+        	tmcl_setOutput();
+        	break;
+        case TMCL_GIO:
+            tmcl_getInput();
+          break;
     	case TMCL_GetVersion:
     		tmcl_getVersion();
     		break;
+        case TMCL_readRegisterChannel_1:
+        	if (ActualCommand.Motor == 0)
+        		ActualReply.Value.Int32 = tmc4671_readInt(ActualCommand.Motor, ActualCommand.Type);
+        	else if (ActualCommand.Motor == 1)
+        		ActualReply.Value.Int32 = tmc6200_readInt(ActualCommand.Motor, ActualCommand.Type);
+        	break;
+        case TMCL_writeRegisterChannel_1:
+        	if (ActualCommand.Motor == 0)
+        		tmc4671_writeInt(ActualCommand.Motor, ActualCommand.Type, ActualCommand.Value.Int32);
+        	else if (ActualCommand.Motor == 1)
+        		tmc6200_writeInt(ActualCommand.Motor, ActualCommand.Type, ActualCommand.Value.Int32);
+          break;
     	case TMCL_Boot:
     		tmcl_boot();
     		break;
@@ -226,6 +259,43 @@ void tmcl_handleAxisParameter(uint8_t command)
 	} else ActualReply.Status = REPLY_INVALID_VALUE;
 }
 
+/* TMCL command SIO */
+void tmcl_setOutput()
+{
+	switch(ActualCommand.Motor)
+	{
+		case 2: // digital_outputs
+			if(ActualCommand.Value.Int32 == 0)
+				tmcm_clearModuleSpecificIOPin(ActualCommand.Type);
+			else
+				tmcm_setModuleSpecificIOPin(ActualCommand.Type);
+			break;
+		default:
+			ActualReply.Status = REPLY_INVALID_VALUE;
+			break;
+	}
+}
+
+/* TMCL command GIO */
+void tmcl_getInput()
+{
+	switch(ActualCommand.Motor)
+	{
+    	case 0: // digital_inputs
+//    		ActualReply.Value.Int32 = tmcm_getModuleSpecificIOPin(ActualCommand.Type);
+    		break;
+    	case 1: // analog_inputs
+    		ActualReply.Value.Int32 = tmcm_getModuleSpecificADCValue(ActualCommand.Type);
+    		break;
+    	case 2: // digital outputs
+    		ActualReply.Value.Int32 = tmcm_getModuleSpecificIOPinStatus(ActualCommand.Type);
+    		break;
+    	default:
+    		ActualReply.Status = REPLY_INVALID_VALUE;
+    		break;
+	}
+}
+
 /* TMCL command 136 (Get Version) */
 void tmcl_getVersion()
 {
@@ -271,7 +341,8 @@ void tmcl_boot()
 			ActualCommand.Value.Byte[3]==0xa3 && ActualCommand.Value.Byte[2]==0xb4 &&
 			ActualCommand.Value.Byte[1]==0xc5 && ActualCommand.Value.Byte[0]==0xd6)
 	{
-		tmcm_disableDriver();
+		for (int i = 0; i < NUMBER_OF_MOTORS; i++)
+			tmcm_disableDriver(i);
 
 #ifdef USE_USB_INTERFACE
 		usb_detach();

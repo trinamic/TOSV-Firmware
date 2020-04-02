@@ -12,5 +12,6 @@
 
 	void bldc_init();
 	void bldc_processBLDC();
+	void bldc_updateHallSettings(uint8_t motor);
 
 #endif

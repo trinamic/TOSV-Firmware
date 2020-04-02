@@ -13,6 +13,7 @@
 #if DEVICE==TMCM_0020_V10
 
 	#define BOARD_CPU STM32F205
+	#define NUMBER_OF_MOTORS 		1
 
 	#include "cpu/STM32F205/stm32f2xx.h"
 	#include "cpu/STM32F205/stm32f2xx_dac.h"
@@ -39,12 +40,22 @@
 	#include "../HAL_Definitions.h"
 	#include "../Flags.h"
 
+	#include "TMC-API/tmc/ic/TMC4671/TMC4671.h"
+	#include "TMC-API/tmc/ic/TMC6200/TMC6200.h"
+	#include "TMC-API/tmc/ramp/LinearRamp.h"
+
+
 	// module number in HEX (0020)
 	#define SW_TYPE_HIGH 		0x00
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
 	#define SW_VERSION_LOW  	0
+
+	#define WEASEL_SPI3_ON_PC10_PC11_PC12
+	#define DRAGON_SPI3_ON_PC10_PC11_PC12
+
+	TMC_LinearRamp rampGenerator;
 
 #endif /* DEVICE==TMCM_0020_V10 */
 
