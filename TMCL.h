@@ -9,6 +9,9 @@
 #define TMCL_H
 
 	#include "Definitions.h"
+	#include "BLDC.h"
+	#include "hal/modules/SelectModule.h"
+
 
 	void tmcl_init();
 	void tmcl_processCommand();

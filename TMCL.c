@@ -23,10 +23,11 @@
 	extern const char *VersionString;
 
 	// local used functions
+	uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, int32_t *value);
+
 	void tmcl_rotateLeft();
 	void tmcl_rotateRight();
 	void tmcl_motorStop();
-	void tmcl_handleAxisParameter(uint8_t command);
 	void tmcl_setOutput();
 	void tmcl_getInput();
 	void tmcl_getVersion();
@@ -69,7 +70,11 @@ void tmcl_executeActualCommand()
     	case TMCL_GAP:
     	case TMCL_STAP:
     	case TMCL_RSAP:
-    		tmcl_handleAxisParameter(ActualCommand.Opcode);
+    		{
+    			int32_t value = ActualCommand.Value.Int32;
+    			ActualReply.Status = tmcl_handleAxisParameter(ActualCommand.Motor, ActualCommand.Opcode, ActualCommand.Type, &value);
+    			ActualReply.Value.Int32 = value;
+    	    }
     		break;
         case TMCL_SIO:
         	tmcl_setOutput();
@@ -238,25 +243,171 @@ void tmcl_motorStop()
 	//bldc_setTargetVelocity(0);
 }
 
-void tmcl_handleAxisParameter(uint8_t command)
+uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, int32_t *value)
 {
-	UNUSED(command);
-	if(ActualCommand.Motor == 0)
+//	UNUSED(command);
+	uint32_t errors = REPLY_OK;
+
+	if(motor == 0)
 	{
-		switch(ActualCommand.Type)
+		switch(type)
 		{
- 			case 0: // target position
-//				if (command == TMCL_SAP) {
-//					bldc_moveToAbsolutePosition(ActualCommand.Value.Int32);
-//				} else if (command == TMCL_GAP) {
-//					ActualReply.Value.Int32 = bldc_getTargetPosition();
-//				}
+			// ===== ADC measurement =====
+			case 0: // adc_I0_raw
+				if (command == TMCL_GAP)
+				{
+					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, 0 /*ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW*/);
+					*value = TMC4671_FIELD_READ(motor, TMC4671_ADC_RAW_DATA, TMC4671_ADC_I0_RAW_MASK, TMC4671_ADC_I0_RAW_SHIFT);
+				}
 				break;
+			case 1: // adc_I1_raw
+				if (command == TMCL_GAP)
+				{
+					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, 0 /*ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW*/);
+					*value = TMC4671_FIELD_READ(motor, TMC4671_ADC_RAW_DATA, TMC4671_ADC_I1_RAW_MASK, TMC4671_ADC_I1_RAW_SHIFT);
+				}
+				break;
+
+				// ===== ADC settings =====
+				case 5: // dual-shunt phase_A offset
+					if (command == TMCL_SAP) {
+						if (!bldc_setAdcI0Offset(motor, *value))
+							errors = REPLY_INVALID_VALUE;
+					} else if (command == TMCL_GAP) {
+						*value = bldc_getAdcI0Offset(motor);
+					}
+//					else if (command == TMCL_STAP) {
+//						eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I0_offset-(u32)&motorConfig,
+//								(u8 *)&motorConfig.adc_I0_offset, sizeof(motorConfig.adc_I0_offset));
+//					} else if (command == TMCL_RSAP) {
+//						eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I0_offset-(u32)&motorConfig,
+//								(u8 *)&motorConfig.adc_I0_offset, sizeof(motorConfig.adc_I0_offset));
+//					}
+					break;
+				case 6: // dual-shunt phase_B offset
+					if (command == TMCL_SAP) {
+						if (!bldc_setAdcI1Offset(motor, *value))
+							errors = REPLY_INVALID_VALUE;
+					} else if (command == TMCL_GAP) {
+						*value = bldc_getAdcI1Offset(motor);
+					}
+//					else if (command == TMCL_STAP) {
+//						eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I1_offset-(u32)&motorConfig,
+//								(u8 *)&motorConfig.adc_I1_offset, sizeof(motorConfig.adc_I1_offset));
+//					} else if (command == TMCL_RSAP) {
+//						eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I1_offset-(u32)&motorConfig,
+//								(u8 *)&motorConfig.adc_I1_offset, sizeof(motorConfig.adc_I1_offset));
+//					}
+					break;
+
+					// ===== motor settings =====
+					case 10: // motor pole pairs
+						if (command == TMCL_SAP) {
+							if((*value >= 1) && (*value <= 255))
+								bldc_updateMotorPolePairs(motor, *value);
+							else
+								errors = REPLY_INVALID_VALUE;
+						} else if (command == TMCL_GAP) {
+							*value = bldc_getMotorPolePairs(motor);
+						}
+//						else if (command == TMCL_STAP) {
+//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorPolePairs-(u32)&motorConfig,
+//									(u8 *)&motorConfig.motorPolePairs, sizeof(motorConfig.motorPolePairs));
+//						} else if (command == TMCL_RSAP) {
+//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorPolePairs-(u32)&motorConfig,
+//									(u8 *)&motorConfig.motorPolePairs, sizeof(motorConfig.motorPolePairs));
+//						}
+						break;
+					case 11: // max current
+						if (command == TMCL_SAP) {
+							if((*value >= 0) && (*value <= TMCM_MAX_TORQUE))
+								bldc_updateMaxMotorCurrent(motor, *value);
+							else
+								errors = REPLY_INVALID_VALUE;
+						} else if (command == TMCL_GAP) {
+							*value = bldc_getMaxMotorCurrent(motor);
+						}
+//						else if (command == TMCL_STAP) {
+//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.maximumCurrent-(u32)&motorConfig,
+//									(u8 *)&motorConfig.maximumCurrent, sizeof(motorConfig.maximumCurrent));
+//						} else if (command == TMCL_RSAP) {
+//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.maximumCurrent-(u32)&motorConfig,
+//									(u8 *)&motorConfig.maximumCurrent, sizeof(motorConfig.maximumCurrent));
+//						}
+						break;
+					case 12: // open loop current
+						if (command == TMCL_SAP) {
+							if((*value >= 0) && (*value <= TMCM_MAX_TORQUE))
+								motorConfig.openLoopCurrent = *value;
+							else
+								errors = REPLY_INVALID_VALUE;
+						} else if (command == TMCL_GAP) {
+							*value = motorConfig.openLoopCurrent;
+						}
+//						else if (command == TMCL_STAP) {
+//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.openLoopCurrent-(u32)&motorConfig,
+//									(u8 *)&motorConfig.openLoopCurrent, sizeof(motorConfig.openLoopCurrent));
+//						} else if (command == TMCL_RSAP) {
+//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.openLoopCurrent-(u32)&motorConfig,
+//									(u8 *)&motorConfig.openLoopCurrent, sizeof(motorConfig.openLoopCurrent));
+//						}
+						break;
+//				      case 13: // motor direction (shaftBit)
+//				          if (command == TMCL_SAP) {
+//				            if (!bldc_setMotorDirection(motor, *value))
+//				              errors = REPLY_INVALID_VALUE;
+//				          } else if (command == TMCL_GAP) {
+//				            *value = bldc_getMotorDirection(motor);
+//				          }
+//				          else if (command == TMCL_STAP) {
+//				        	  eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.shaftBit-(u32)&motorConfig,
+//				        			  (u8 *)&motorConfig.shaftBit, sizeof(motorConfig.shaftBit));
+//				          } else if (command == TMCL_RSAP) {
+//				        	  eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.shaftBit-(u32)&motorConfig,
+//				        			  (u8 *)&motorConfig.shaftBit, sizeof(motorConfig.shaftBit));
+//				          }
+				          break;
+					case 14: // motor type
+						if (command == TMCL_SAP) {
+							if (!bldc_setMotorType(motor, *value))
+								errors = REPLY_INVALID_VALUE;
+						} else if (command == TMCL_GAP) {
+							*value = bldc_getMotorType(motor);
+						}
+//						else if (command == TMCL_STAP) {
+//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorType-(u32)&motorConfig,
+//									(u8 *)&motorConfig.motorType, sizeof(motorConfig.motorType));
+//						} else if (command == TMCL_RSAP) {
+//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorType-(u32)&motorConfig,
+//									(u8 *)&motorConfig.motorType, sizeof(motorConfig.motorType));
+//						}
+						break;
+
+					case 15: // commutation mode ("sensor_m_selection")
+						if (command == TMCL_SAP) {
+							if (!bldc_setCommutationMode(*value))
+								errors = REPLY_INVALID_VALUE;
+						} else if (command == TMCL_GAP) {
+							*value = bldc_getCommutationMode();
+						}
+//						else if (command == TMCL_STAP) {
+//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
+//									(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
+//						} else if (command == TMCL_RSAP) {
+//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
+//									(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
+//						}
+						break;
+
+
 			default:
 				ActualReply.Status = REPLY_WRONG_TYPE;
 				break;
 		}
-	} else ActualReply.Status = REPLY_INVALID_VALUE;
+	}
+	else ActualReply.Status = REPLY_INVALID_VALUE;
+
+	return errors;
 }
 
 /* TMCL command SIO */

@@ -62,6 +62,7 @@
 	extern void tmcm_initModuleConfig();
 	extern void tmcm_initMotorConfig();
 	extern void tmcm_initModuleSpecificIO();
+	extern void tmcm_initModuleSpecificADC();
 	extern void tmcm_updateConfig();
 
 	// LEDs
