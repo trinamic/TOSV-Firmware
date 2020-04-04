@@ -7,62 +7,67 @@
 
 #include "Flags.h"
 
-volatile uint32_t statusFlags = 0;	// error and status flags (Overvoltage, Overcurrent,...)
+volatile uint32_t statusFlags[NUMBER_OF_MOTORS]; // error and status flags (Overvoltage, Overcurrent,...)
+
+void flags_init(uint8_t motor)
+{
+	statusFlags[motor] = 0;
+}
 
 /* set status flags */
-void flags_setStatusFlag(uint32_t flag)
+void flags_setStatusFlag(uint8_t motor, uint32_t flag)
 {
-	statusFlags |= flag;
+	statusFlags[motor] |= flag;
 }
 
 /* clear status flag */
-void flags_clearStatusFlag(uint32_t flag)
+void flags_clearStatusFlag(uint8_t motor, uint32_t flag)
 {
-	statusFlags &= ~flag;
+	statusFlags[motor] &= ~flag;
 }
 
 /* clear/set status flag */
-void flags_setStatusFlagEnabled(uint32_t flag, bool enabled)
+void flags_setStatusFlagEnabled(uint8_t motor, uint32_t flag, bool enabled)
 {
 	if (enabled)
-		statusFlags |= flag;
+		statusFlags[motor] |= flag;
 	else
-		statusFlags &= ~flag;
+		statusFlags[motor] &= ~flag;
 }
 
 /* check if status flag is set */
-uint8_t flags_isStatusFlagSet(uint32_t flag)
+uint8_t flags_isStatusFlagSet(uint8_t motor, uint32_t flag)
 {
-	if(statusFlags & flag)
+	if(statusFlags[motor] & flag)
 		return true;
 	else
 		return false;
 }
 
 /* reset error flags */
-void flags_resetErrorFlags()
+void flags_resetErrorFlags(uint8_t motor)
 {
-	flags_clearStatusFlag(OVERCURRENT|OVERTEMPERATURE|HALLERROR|DRIVER_ERROR);
+	flags_clearStatusFlag(motor, OVERCURRENT|OVERTEMPERATURE|HALLERROR|DRIVER_ERROR);
 }
 
 /* get status flags and afterwards reset error flags */
-uint32_t flags_getAllStatusFlags()
+uint32_t flags_getAllStatusFlags(uint8_t motor)
 {
-	uint32_t flags = statusFlags;
+	uint32_t flags = statusFlags[motor];
 	// reset error flags
-	flags_resetErrorFlags();
+	flags_resetErrorFlags(motor);
 	return flags;
 }
 
 /* get and afterwards reset error flags */
-uint32_t flags_getErrorFlags()
+uint32_t flags_getErrorFlags(uint8_t motor)
 {
-	uint32_t flags = statusFlags;
+	uint32_t flags = statusFlags[motor];
 	uint32_t mask = OVERCURRENT|UNDERVOLTAGE|OVERTEMPERATURE|HALLERROR|DRIVER_ERROR;
 
 	// return only error flags
 	flags &= mask;
 	// reset error flags
-	flags_resetErrorFlags();
+	flags_resetErrorFlags(motor);
     return flags;
 }

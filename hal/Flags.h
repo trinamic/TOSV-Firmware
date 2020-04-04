@@ -31,12 +31,13 @@
 	#define POSITION_END            0x00004000	// 14
 	#define MODULE_INITIALIZED		0x00008000	// 15
 
-	void flags_setStatusFlag(uint32_t flag);
-	void flags_clearStatusFlag(uint32_t flag);
-	void flags_setStatusFlagEnabled(uint32_t flag, bool enabled);
-	uint8_t flags_isStatusFlagSet(uint32_t flag);
-	void flags_resetErrorFlags();
-	uint32_t flags_getAllStatusFlags();
-	uint32_t flags_getErrorFlags();
+	void flags_init(uint8_t motor);
+	void flags_setStatusFlag(uint8_t motor, uint32_t flag);
+	void flags_clearStatusFlag(uint8_t motor, uint32_t flag);
+	void flags_setStatusFlagEnabled(uint8_t motor, uint32_t flag, bool enabled);
+	uint8_t flags_isStatusFlagSet(uint8_t motor, uint32_t flag);
+	void flags_resetErrorFlags(uint8_t motor);
+	uint32_t flags_getAllStatusFlags(uint8_t motor);
+	uint32_t flags_getErrorFlags(uint8_t motor);
 
 #endif // FLAGS_H

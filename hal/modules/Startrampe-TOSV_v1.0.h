@@ -1,16 +1,16 @@
 /*
- * TMCM-0020_v1.0.h
+ * Startrampe-TOSV_v1.0.h
  *
  *  Created on: 31.03.2020
  *      Author: ED
  */
 
-#ifndef TMCM_0020_V10_H
-#define TMCM_0020_V10_H
+#ifndef STARTRAMPE_TOSV_V10_H
+#define STARTRAMPE_TOSV_V10_H
 
 	#include "SelectModule.h"
 
-#if DEVICE==TMCM_0020_V10
+#if DEVICE==STARTRAMPE_TOSV_V10
 
 	#define BOARD_CPU STM32F205
 	#define NUMBER_OF_MOTORS 		1
@@ -26,7 +26,7 @@
 
 	#define MAX_VELOCITY 				(int32_t)200000
 	#define MAX_ACCELERATION			(int32_t)100000
-	#define TMCM_MAX_TORQUE 			(int32_t)5000
+	#define TMCM_MAX_CURRENT 			(int32_t)5000
 
 	#define USE_USB_INTERFACE
 	#define USE_ALIVE_LED
@@ -41,6 +41,7 @@
 	#include "../Flags.h"
 
 	#include "TMC-API/tmc/ic/TMC4671/TMC4671.h"
+	#include "TMC-API/tmc/ic/TMC4671/TMC4671_Variants.h"
 	#include "TMC-API/tmc/ic/TMC6200/TMC6200.h"
 	#include "TMC-API/tmc/ramp/LinearRamp.h"
 
@@ -55,8 +56,8 @@
 	#define WEASEL_SPI3_ON_PC10_PC11_PC12
 	#define DRAGON_SPI3_ON_PC10_PC11_PC12
 
-	TMC_LinearRamp rampGenerator;
+	TMC_LinearRamp rampGenerator[NUMBER_OF_MOTORS];
 
-#endif /* DEVICE==TMCM_0020_V10 */
+#endif /* DEVICE==STARTRAMPE_TOSV_V10 */
 
-#endif /* TMCM_0020_V10_H */
+#endif /* STARTRAMPE_TOSV_V10_H */

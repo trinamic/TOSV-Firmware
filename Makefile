@@ -20,8 +20,8 @@ endif
 # - CPU_INC_DIR include path for the selected cpu
 ifeq ($(CPU),F205)
 	MCU = cortex-m3
-	SUBMDL   = STM32F205RB
-	TARGET = TMCM-0020-TOSV
+	SUBMDL = STM32F205RB
+	TARGET = Startrampe-TOSV
 	CPU_INC_DIR = cpu/STM32F205
 	ASRC =  $(CPU_INC_DIR)/startup_stm32f2xx.S
 	
@@ -92,13 +92,15 @@ ifeq ($(CPU),F205)
 	SRC += $(CPU_INC_DIR)/usb_dcd_int.c
 	
 	# modules
-	SRC += hal/modules/TMCM-0020_v1.0.c
+	SRC += hal/modules/Startrampe-TOSV_v1.0.c
 	
 endif
 
 # hal parts
 SRC += hal/system/Cpu.c
 SRC += hal/system/SysTick.c
+SRC += hal/system/Debug.c
+SRC += hal/system/SystemInfo.c
 SRC += hal/comm/SPI.c
 SRC += hal/comm/USB.c
 SRC += hal/Flags.c

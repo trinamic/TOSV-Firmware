@@ -7,9 +7,10 @@
 
 #include "TMCL.h"
 #include "hal/system/SysTick.h"
+#include "hal/system/SystemInfo.h"
+#include "hal/system/Debug.h"
 #include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
-#include <stdlib.h>
 
 #ifdef USE_USB_INTERFACE
 	#include "hal/comm/USB.h"
@@ -87,15 +88,15 @@ void tmcl_executeActualCommand()
     		break;
         case TMCL_readRegisterChannel_1:
         	if (ActualCommand.Motor == 0)
-        		ActualReply.Value.Int32 = tmc4671_readInt(ActualCommand.Motor, ActualCommand.Type);
+        		ActualReply.Value.Int32 = tmc4671_readInt(DEFAULT_MC, ActualCommand.Type);
         	else if (ActualCommand.Motor == 1)
-        		ActualReply.Value.Int32 = tmc6200_readInt(ActualCommand.Motor, ActualCommand.Type);
+        		ActualReply.Value.Int32 = tmc6200_readInt(DEFAULT_DRV, ActualCommand.Type);
         	break;
         case TMCL_writeRegisterChannel_1:
         	if (ActualCommand.Motor == 0)
-        		tmc4671_writeInt(ActualCommand.Motor, ActualCommand.Type, ActualCommand.Value.Int32);
+        		tmc4671_writeInt(DEFAULT_MC, ActualCommand.Type, ActualCommand.Value.Int32);
         	else if (ActualCommand.Motor == 1)
-        		tmc6200_writeInt(ActualCommand.Motor, ActualCommand.Type, ActualCommand.Value.Int32);
+        		tmc6200_writeInt(DEFAULT_DRV, ActualCommand.Type, ActualCommand.Value.Int32);
           break;
     	case TMCL_Boot:
     		tmcl_boot();
@@ -199,6 +200,8 @@ void tmcl_processCommand()
 
     if(usb_getUSBCmd(USBCmd))
     {
+    	systemInfo_incCommunicationLoopCounter();
+
     	if(USBCmd[0] == moduleConfig.serialModuleAddress)	 // check address
     	{
     		uint8_t Checksum=0;
@@ -228,177 +231,525 @@ void tmcl_processCommand()
 /* TMCL command ROL */
 void tmcl_rotateLeft()
 {
-	//bldc_setTargetVelocity(-ActualCommand.Value.Int32);
+	bldc_setTargetVelocity(ActualCommand.Motor, -ActualCommand.Value.Int32);
 }
 
 /* TMCL command ROR */
 void tmcl_rotateRight()
 {
-	//bldc_setTargetVelocity(ActualCommand.Value.Int32);
+	bldc_setTargetVelocity(ActualCommand.Motor, ActualCommand.Value.Int32);
 }
 
 /* TMCL command MST */
 void tmcl_motorStop()
 {
-	//bldc_setTargetVelocity(0);
+	bldc_setTargetVelocity(ActualCommand.Motor, 0);
 }
 
 uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, int32_t *value)
 {
-//	UNUSED(command);
 	uint32_t errors = REPLY_OK;
 
-	if(motor == 0)
+	if(motor < NUMBER_OF_MOTORS)
 	{
 		switch(type)
 		{
-			// ===== ADC measurement =====
-			case 0: // adc_I0_raw
+			// ===== general info =====
+
+			case 0: // status flags
 				if (command == TMCL_GAP)
 				{
-					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, 0 /*ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW*/);
+					*value = flags_getAllStatusFlags(motor);
+				}
+				break;
+			case 1: // supply voltage
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getSupplyVoltage();
+				}
+				break;
+			case 2: // driver temperature
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getMotorTemperature();
+				}
+				break;
+
+			// ===== ADC measurement =====
+
+			case 3: // adc_I0_raw
+				if (command == TMCL_GAP)
+				{
+					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW);
 					*value = TMC4671_FIELD_READ(motor, TMC4671_ADC_RAW_DATA, TMC4671_ADC_I0_RAW_MASK, TMC4671_ADC_I0_RAW_SHIFT);
 				}
 				break;
-			case 1: // adc_I1_raw
+			case 4: // adc_I1_raw
 				if (command == TMCL_GAP)
 				{
-					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, 0 /*ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW*/);
+					tmc4671_writeInt(motor, TMC4671_ADC_RAW_ADDR, ADC_RAW_ADDR_ADC_I1_RAW_ADC_I0_RAW);
 					*value = TMC4671_FIELD_READ(motor, TMC4671_ADC_RAW_DATA, TMC4671_ADC_I1_RAW_MASK, TMC4671_ADC_I1_RAW_SHIFT);
 				}
 				break;
+			case 5: // current_phase_U
+				if (command == TMCL_GAP)
+					*value = (int16_t)TMC4671_FIELD_READ(motor, TMC4671_ADC_IWY_IUX, TMC4671_ADC_IUX_MASK, TMC4671_ADC_IUX_SHIFT);
+				break;
+			case 6: // current_phase_V
+				if (command == TMCL_GAP)
+					*value = (int16_t)TMC4671_FIELD_READ(motor, TMC4671_ADC_IV, TMC4671_ADC_IV_MASK, TMC4671_ADC_IV_SHIFT);
+				break;
+			case 7: // current_phase_W
+				if (command == TMCL_GAP)
+				{
+					*value = (int16_t)TMC4671_FIELD_READ(motor, TMC4671_ADC_IWY_IUX, TMC4671_ADC_IWY_MASK, TMC4671_ADC_IWY_SHIFT);
+				}
+				break;
 
-				// ===== ADC settings =====
-				case 5: // dual-shunt phase_A offset
-					if (command == TMCL_SAP) {
-						if (!bldc_setAdcI0Offset(motor, *value))
-							errors = REPLY_INVALID_VALUE;
-					} else if (command == TMCL_GAP) {
-						*value = bldc_getAdcI0Offset(motor);
+			// ===== ADC offset configuration =====
+
+			case 8: // dual-shunt adc_I0 offset
+				if (command == TMCL_SAP)
+				{
+					if ((*value >= 0) && (*value < 65536))
+						bldc_setAdcI0Offset(motor, *value);
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getAdcI0Offset(motor);
+				}
+				break;
+			case 9: // dual-shunt adc_I1 offset
+				if (command == TMCL_SAP)
+				{
+					if ((*value >= 0) && (*value < 65536))
+						bldc_setAdcI1Offset(motor, *value);
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getAdcI1Offset(motor);
+				}
+				break;
+
+			// ===== motor settings =====
+
+			case 10: // motor pole pairs
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 1) && (*value <= 255))
+						bldc_updateMotorPolePairs(motor, *value);
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getMotorPolePairs(motor);
+				}
+				break;
+			case 11: // max current
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= TMCM_MAX_CURRENT))
+						bldc_updateMaxMotorCurrent(motor, *value);
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getMaxMotorCurrent(motor);
+				}
+				break;
+			case 12: // open loop current
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= TMCM_MAX_CURRENT))
+						motorConfig[motor].openLoopCurrent = *value;
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].openLoopCurrent;
+				}
+				break;
+		      case 13: // motor direction (shaftBit)
+		          if (command == TMCL_SAP) {
+		            if (!bldc_setMotorDirection(motor, *value))
+		              errors = REPLY_INVALID_VALUE;
+		          } else if (command == TMCL_GAP) {
+		            *value = bldc_getMotorDirection(motor);
+		          }
+		          break;
+			case 14: // motor type
+				if (command == TMCL_GAP)
+				{
+					*value = motorConfig[motor].motorType; // firmware supports BLDC motor only
+				}
+				break;
+			case 15: // commutation mode ("sensor_selection")
+				if (command == TMCL_SAP)
+				{
+					if (!bldc_setCommutationMode(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getCommutationMode(motor);
+				}
+				break;
+
+			// ===== pwm settings =====
+
+			case 16: // set weasel pwm frequency
+				if (command == TMCL_SAP)
+				{
+					motorConfig[motor].pwm_freq = *value;
+					tmc4671_writeInt(motor, TMC4671_PWM_MAXCNT, 25000000 / (*value) * 4 - 1);
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pwm_freq;
+				}
+				break;
+			case 17: // placeholder for PWM_BBM_H time
+				break;
+			case 18: // placeholder for PWM_BBM_H time
+				break;
+
+			// ===== torque mode settings =====
+
+			case 20: // target current
+				if (command == TMCL_SAP)
+				{
+					if(!bldc_setTargetMotorCurrent(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getTargetMotorCurrent(motor);
+				}
+				break;
+			case 21: // actual current
+				if (command == TMCL_GAP)
+					*value = bldc_getActualMotorCurrent(motor);
+				break;
+
+			// ===== velocity mode settings =====
+
+			case 25: // target velocity
+				if (command == TMCL_SAP)
+				{
+					if(!bldc_setTargetVelocity(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getTargetVelocity(motor);
+				}
+				break;
+			case 26: // ramp velocity
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getRampGeneratorVelocity(motor);
+				}
+				break;
+			case 27: // actual velocity
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getActualVelocity(motor);
+				}
+				break;
+			case 28: // max velocity
+				if (command == TMCL_SAP)
+				{
+					if (!bldc_setMaxVelocity(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].maxPositioningSpeed;
+				}
+				break;
+			case 29: // enable velocity ramp
+				if (command == TMCL_SAP)
+				{
+					if (!bldc_setRampEnabled(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].useVelocityRamp ? 1:0;
+				}
+				break;
+			case 30: // acceleration
+				if (command == TMCL_SAP)
+				{
+					if (!bldc_setAcceleration(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].acceleration;
+				}
+				break;
+			case 31: // placeholder for deceleration (ED)
+				break;
+
+			// ===== pi controller settings =====
+
+			case 35: // torque P
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidTorque_P_param = *value;
+						tmc4671_setTorqueFluxPI(motor, motorConfig[motor].pidTorque_P_param, motorConfig[motor].pidTorque_I_param);
+					} else {
+						errors = REPLY_INVALID_VALUE;
 					}
-//					else if (command == TMCL_STAP) {
-//						eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I0_offset-(u32)&motorConfig,
-//								(u8 *)&motorConfig.adc_I0_offset, sizeof(motorConfig.adc_I0_offset));
-//					} else if (command == TMCL_RSAP) {
-//						eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I0_offset-(u32)&motorConfig,
-//								(u8 *)&motorConfig.adc_I0_offset, sizeof(motorConfig.adc_I0_offset));
-//					}
-					break;
-				case 6: // dual-shunt phase_B offset
-					if (command == TMCL_SAP) {
-						if (!bldc_setAdcI1Offset(motor, *value))
-							errors = REPLY_INVALID_VALUE;
-					} else if (command == TMCL_GAP) {
-						*value = bldc_getAdcI1Offset(motor);
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidTorque_P_param;
+				}
+				break;
+			case 36: // torque I
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidTorque_I_param = *value;
+						tmc4671_setTorqueFluxPI(motor, motorConfig[motor].pidTorque_P_param, motorConfig[motor].pidTorque_I_param);
+					} else {
+						errors = REPLY_INVALID_VALUE;
 					}
-//					else if (command == TMCL_STAP) {
-//						eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I1_offset-(u32)&motorConfig,
-//								(u8 *)&motorConfig.adc_I1_offset, sizeof(motorConfig.adc_I1_offset));
-//					} else if (command == TMCL_RSAP) {
-//						eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.adc_I1_offset-(u32)&motorConfig,
-//								(u8 *)&motorConfig.adc_I1_offset, sizeof(motorConfig.adc_I1_offset));
-//					}
-					break;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidTorque_I_param;
+				}
+				break;
+			case 37: // velocity P
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidVelocity_P_param = *value;
+						tmc4671_setVelocityPI(motor, motorConfig[motor].pidVelocity_P_param, motorConfig[motor].pidVelocity_I_param);
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidVelocity_P_param;
+				}
+				break;
+			case 38: // velocity I
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidVelocity_I_param = *value;
+						tmc4671_setVelocityPI(motor, motorConfig[motor].pidVelocity_P_param, motorConfig[motor].pidVelocity_I_param);
+					} else {
+						errors = REPLY_INVALID_VALUE;
+					}
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidVelocity_I_param;
+				}
+				break;
 
-					// ===== motor settings =====
-					case 10: // motor pole pairs
-						if (command == TMCL_SAP) {
-							if((*value >= 1) && (*value <= 255))
-								bldc_updateMotorPolePairs(motor, *value);
-							else
-								errors = REPLY_INVALID_VALUE;
-						} else if (command == TMCL_GAP) {
-							*value = bldc_getMotorPolePairs(motor);
-						}
-//						else if (command == TMCL_STAP) {
-//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorPolePairs-(u32)&motorConfig,
-//									(u8 *)&motorConfig.motorPolePairs, sizeof(motorConfig.motorPolePairs));
-//						} else if (command == TMCL_RSAP) {
-//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorPolePairs-(u32)&motorConfig,
-//									(u8 *)&motorConfig.motorPolePairs, sizeof(motorConfig.motorPolePairs));
-//						}
-						break;
-					case 11: // max current
-						if (command == TMCL_SAP) {
-							if((*value >= 0) && (*value <= TMCM_MAX_TORQUE))
-								bldc_updateMaxMotorCurrent(motor, *value);
-							else
-								errors = REPLY_INVALID_VALUE;
-						} else if (command == TMCL_GAP) {
-							*value = bldc_getMaxMotorCurrent(motor);
-						}
-//						else if (command == TMCL_STAP) {
-//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.maximumCurrent-(u32)&motorConfig,
-//									(u8 *)&motorConfig.maximumCurrent, sizeof(motorConfig.maximumCurrent));
-//						} else if (command == TMCL_RSAP) {
-//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.maximumCurrent-(u32)&motorConfig,
-//									(u8 *)&motorConfig.maximumCurrent, sizeof(motorConfig.maximumCurrent));
-//						}
-						break;
-					case 12: // open loop current
-						if (command == TMCL_SAP) {
-							if((*value >= 0) && (*value <= TMCM_MAX_TORQUE))
-								motorConfig.openLoopCurrent = *value;
-							else
-								errors = REPLY_INVALID_VALUE;
-						} else if (command == TMCL_GAP) {
-							*value = motorConfig.openLoopCurrent;
-						}
-//						else if (command == TMCL_STAP) {
-//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.openLoopCurrent-(u32)&motorConfig,
-//									(u8 *)&motorConfig.openLoopCurrent, sizeof(motorConfig.openLoopCurrent));
-//						} else if (command == TMCL_RSAP) {
-//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.openLoopCurrent-(u32)&motorConfig,
-//									(u8 *)&motorConfig.openLoopCurrent, sizeof(motorConfig.openLoopCurrent));
-//						}
-						break;
-//				      case 13: // motor direction (shaftBit)
-//				          if (command == TMCL_SAP) {
-//				            if (!bldc_setMotorDirection(motor, *value))
-//				              errors = REPLY_INVALID_VALUE;
-//				          } else if (command == TMCL_GAP) {
-//				            *value = bldc_getMotorDirection(motor);
-//				          }
-//				          else if (command == TMCL_STAP) {
-//				        	  eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.shaftBit-(u32)&motorConfig,
-//				        			  (u8 *)&motorConfig.shaftBit, sizeof(motorConfig.shaftBit));
-//				          } else if (command == TMCL_RSAP) {
-//				        	  eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.shaftBit-(u32)&motorConfig,
-//				        			  (u8 *)&motorConfig.shaftBit, sizeof(motorConfig.shaftBit));
-//				          }
-				          break;
-					case 14: // motor type
-						if (command == TMCL_SAP) {
-							if (!bldc_setMotorType(motor, *value))
-								errors = REPLY_INVALID_VALUE;
-						} else if (command == TMCL_GAP) {
-							*value = bldc_getMotorType(motor);
-						}
-//						else if (command == TMCL_STAP) {
-//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorType-(u32)&motorConfig,
-//									(u8 *)&motorConfig.motorType, sizeof(motorConfig.motorType));
-//						} else if (command == TMCL_RSAP) {
-//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig.motorType-(u32)&motorConfig,
-//									(u8 *)&motorConfig.motorType, sizeof(motorConfig.motorType));
-//						}
-						break;
+			case 40: // torque Error
+				if (command == TMCL_GAP)
+				{
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 0, TMC4671_PID_TORQUE_ERROR_MASK, TMC4671_PID_TORQUE_ERROR_SHIFT);
+				}
+				break;
+			case 41: // torque I-Sum
+				if (command == TMCL_GAP)
+				{
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 4, TMC4671_PID_TORQUE_ERROR_SUM_MASK, TMC4671_PID_TORQUE_ERROR_SUM_SHIFT);
+				}
+				break;
+			case 42: // flux Error
+				if (command == TMCL_GAP)
+				{
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 1, TMC4671_PID_FLUX_ERROR_MASK, TMC4671_PID_FLUX_ERROR_SHIFT);
+				}
+				break;
+			case 43: // flux I-Sum
+				if (command == TMCL_GAP)
+				{
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 5, TMC4671_PID_FLUX_ERROR_SUM_MASK, TMC4671_PID_FLUX_ERROR_SUM_SHIFT);
+				}
+				break;
+			case 44: // velocity Error
+				if (command == TMCL_GAP)
+				{
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 2, TMC4671_PID_VELOCITY_ERROR_MASK, TMC4671_PID_VELOCITY_ERROR_SHIFT) / motorConfig[motor].motorPolePairs;
+				}
+				break;
+			case 45: // velocity I-Sum
+				if (command == TMCL_GAP) {
+					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 6, TMC4671_PID_VELOCITY_ERROR_SUM_MASK, TMC4671_PID_VELOCITY_ERROR_SUM_SHIFT) / motorConfig[motor].motorPolePairs;
+				}
+				break;
 
-					case 15: // commutation mode ("sensor_m_selection")
-						if (command == TMCL_SAP) {
-							if (!bldc_setCommutationMode(*value))
-								errors = REPLY_INVALID_VALUE;
-						} else if (command == TMCL_GAP) {
-							*value = bldc_getCommutationMode();
-						}
-//						else if (command == TMCL_STAP) {
-//							eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
-//									(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
-//						} else if (command == TMCL_RSAP) {
-//							eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
-//									(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
-//						}
-						break;
+			case 47: // actual open loop commutation angle
+				if (command == TMCL_GAP)
+				{
+					*value = FIELD_GET(tmc4671_readInt(motor, TMC4671_OPENLOOP_PHI), TMC4671_OPENLOOP_PHI_MASK, TMC4671_OPENLOOP_PHI_SHIFT);
+				}
+				break;
+			case 48: // actual digital hall angle
+				if (command == TMCL_GAP)
+				{
+					*value = FIELD_GET(tmc4671_readInt(motor, TMC4671_HALL_PHI_E_INTERPOLATED_PHI_E), TMC4671_HALL_PHI_E_MASK, TMC4671_HALL_PHI_E_SHIFT);
+				}
+				break;
 
+			// ===== hall sensor settings =====
+
+			case 50: // hall polarity
+				if (command == TMCL_SAP)
+				{
+					if((*value == 0) || (*value == 1))
+					{
+						motorConfig[motor].hallPolarity = *value;
+						bldc_updateHallSettings(motor);
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					motorConfig[motor].hallPolarity = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_POLARITY_MASK) ? 1 : 0;
+					*value = motorConfig[motor].hallPolarity;
+				}
+				break;
+			case 51: // hall direction
+				if (command == TMCL_SAP)
+				{
+					if((*value == 0) || (*value == 1))
+					{
+						motorConfig[motor].hallDirection = *value;
+						bldc_updateHallSettings(motor);
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					motorConfig[motor].hallDirection = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_DIRECTION_MASK) ? 1 : 0;
+					*value = motorConfig[motor].hallDirection;
+				}
+				break;
+			case 52: // hall interpolation
+				if (command == TMCL_SAP)
+				{
+					if((*value == 0) || (*value == 1))
+					{
+						motorConfig[motor].hallInterpolation = *value;
+						bldc_updateHallSettings(motor);
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					motorConfig[motor].hallInterpolation = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_INTERPOLATION_MASK) ? 1 : 0;
+					*value = motorConfig[motor].hallInterpolation;
+				}
+				break;
+			case 53: // hall phi_e offset
+				if (command == TMCL_SAP)
+				{
+					motorConfig[motor].hallPhiEOffset = *value;
+					bldc_updateHallSettings(motor);
+				} else if (command == TMCL_GAP) {
+					motorConfig[motor].hallPhiEOffset = FIELD_GET(tmc4671_readInt(motor, TMC4671_HALL_PHI_E_PHI_M_OFFSET), TMC4671_HALL_PHI_E_OFFSET_MASK, TMC4671_HALL_PHI_E_OFFSET_SHIFT);
+					*value = motorConfig[motor].hallPhiEOffset;
+				}
+				break;
+			case 54: // raw hall sensor inputs
+				if (command == TMCL_GAP) {
+					*value = (tmc4671_readInt(motor, TMC4671_INPUTS_RAW) & (TMC4671_HALL_WY_OF_HALL_RAW_MASK | TMC4671_HALL_V_OF_HALL_RAW_MASK | TMC4671_HALL_UX_OF_HALL_RAW_MASK)) >> TMC4671_HALL_UX_OF_HALL_RAW_SHIFT;
+				}
+				break;
+
+			// ===== brake chopper settings  ===== (placeholder (ED))
+//			case 60: // brake chopper enable
+//				break;
+//			case 61: // brake chopper voltage
+//				break;
+//			case 62: // brake chopper hysteresis
+//				break;
+//			case 63: // brake chopper active
+//				break;
+
+			// ===== debugging =====
+
+			case 240: // debug value 0
+				if (command == TMCL_SAP)
+					debug_setTestVar0(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar0();
+				break;
+			case 241: // debug value 1
+				if (command == TMCL_SAP)
+					debug_setTestVar1(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar1();
+				break;
+			case 242:
+				// debug value 2
+				if (command == TMCL_SAP)
+					debug_setTestVar2(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar2();
+				break;
+			case 243: // debug value 3
+				if (command == TMCL_SAP)
+					debug_setTestVar3(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar3();
+				break;
+			case 244: // debug value 4
+				if (command == TMCL_SAP)
+					debug_setTestVar4(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar4();
+				break;
+			case 245: // debug value 5
+				if (command == TMCL_SAP)
+					debug_setTestVar5(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar5();
+				break;
+			case 246: // debug value 6
+				if (command == TMCL_SAP)
+					debug_setTestVar6(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar6();
+				break;
+			case 247: // debug value 7
+				if (command == TMCL_SAP)
+					debug_setTestVar7(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar7();
+				break;
+			case 248: // debug value 8
+				if (command == TMCL_SAP)
+					debug_setTestVar8(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar8();
+				break;
+			case 249:
+				// debug value 9
+				if (command == TMCL_SAP)
+					debug_setTestVar9(*value);
+				else if (command == TMCL_GAP)
+					*value = debug_getTestVar9();
+				break;
+
+			case 250:
+				if (command == TMCL_GAP)
+					*value = systemInfo_getMainLoopsPerSecond();
+				break;
+			case 251:
+				if (command == TMCL_GAP)
+					*value = systemInfo_getVelocityLoopsPerSecond();
+				break;
+			case 252:
+				if (command == TMCL_GAP)
+					*value = systemInfo_getCommunicationsPerSecond();
+				break;
+
+			case 255: // enable/disable mc & driver
+				if (command == TMCL_SAP)
+				{
+					if(*value == 0)
+					{
+						//bldc_setStopRegulationMode();
+						tmcm_disableDriver(motor);
+					}
+					else
+					{
+						tmcm_enableDriver(motor);
+					}
+				} else if (command == TMCL_GAP) {
+					*value = tmcm_getDriverState(motor);
+				}
+				break;
 
 			default:
 				ActualReply.Status = REPLY_WRONG_TYPE;

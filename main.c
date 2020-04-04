@@ -7,6 +7,7 @@
 
 #include "hal/system/Cpu.h"
 #include "hal/system/SysTick.h"
+#include "hal/system/SystemInfo.h"
 #include "hal/comm/SPI.h"
 #include "BLDC.h"
 #include "TMCL.h"
@@ -49,6 +50,8 @@ int main(void)
 
 	for(;;)
 	{
+		systemInfo_incMainLoopCounter();
+
 		// process incoming tmcl commands
 		tmcl_processCommand();
 
@@ -62,6 +65,8 @@ int main(void)
 			tmcm_led_run_toggle();
 			ledCounterCheckTime = systick_getTimer();
 		}
+
+		systemInfo_update(systick_getTimer());
 	}
 	return 0;
 }

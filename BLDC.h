@@ -14,29 +14,48 @@
 	void bldc_processBLDC();
 	void bldc_updateHallSettings(uint8_t motor);
 
+	// ===== general info =====
+	int16_t bldc_getSupplyVoltage();
+	int16_t bldc_getMotorTemperature();
 
-	bool bldc_setMotorType(u8 motor, u8 mode);
-	u8 bldc_getMotorType(u8 motor);
+	// ===== ADC offset configuration =====
+	uint16_t bldc_getAdcI0Offset(uint8_t motor);
+	void bldc_setAdcI0Offset(uint8_t motor, uint16_t offset);
 
-	bool bldc_setMotorDirection(u8 motor, u8 direction);
-	u8 bldc_getMotorDirection(u8 motor);
+	uint16_t bldc_getAdcI1Offset(uint8_t motor);
+	void bldc_setAdcI1Offset(uint8_t motor, uint16_t offset);
 
-	bool bldc_setCommutationMode(u8 mode);
-	u8 bldc_getCommutationMode();
+	// ===== motor settings =====
+	uint8_t bldc_getMotorPolePairs(uint8_t motor);
+	void bldc_updateMotorPolePairs(uint8_t motor, uint8_t motorPolePairs);
 
+	uint16_t bldc_getMaxMotorCurrent(uint8_t motor);
+	void bldc_updateMaxMotorCurrent(uint8_t motor, uint16_t maxCurrent);
 
-	int bldc_getAdcI0Offset(u8 motor);
-	bool bldc_setAdcI0Offset(u8 motor, int offset);
+	uint8_t bldc_getMotorDirection(uint8_t motor);
+	bool bldc_setMotorDirection(uint8_t motor, uint8_t direction);
 
-	int bldc_getAdcI1Offset(u8 motor);
-	bool bldc_setAdcI1Offset(u8 motor, int offset);
+	uint8_t bldc_getCommutationMode(uint8_t motor);
+	bool bldc_setCommutationMode(uint8_t motor, uint8_t mode);
 
-	void bldc_updateMotorPolePairs(u8 motor, int motorPolePairs);
-	u8 bldc_getMotorPolePairs(u8 motor);
+	// ===== torque mode settings =====
+	int bldc_getTargetMotorCurrent(uint8_t motor);
+	bool bldc_setTargetMotorCurrent(uint8_t motor, int32_t targetCurrent);
+	int32_t bldc_getActualMotorCurrent(uint8_t motor);
 
-	void bldc_updateMaxMotorCurrent(u8 motor, int maxCurrent);
-	s32 bldc_getMaxMotorCurrent();
+	// ===== velocity mode settings =====
+	int32_t bldc_getTargetVelocity(uint8_t motor);
+	bool bldc_setTargetVelocity(uint8_t motor, int32_t velocity);
+	int32 bldc_getRampGeneratorVelocity(uint8_t motor);
+	int32_t bldc_getActualVelocity(uint8_t motor);
+	bool bldc_setMaxVelocity(uint8_t motor, int32_t maxVelocity);
+	bool bldc_setAcceleration(uint8_t motor, int32_t acceleration);
+	bool bldc_setRampEnabled(uint8_t motor, int32_t enableRamp);
 
+	// ===== pi controller mode settings =====
+	void bldc_switchToRegulationMode(uint8_t motor, uint8_t mode);
 
+	// ===== general motor control mode handling =====
+	void bldc_checkCommutationMode(uint8_t motor);
 
 #endif

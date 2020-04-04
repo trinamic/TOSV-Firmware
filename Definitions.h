@@ -10,8 +10,9 @@
 
 	#include "TMC-API/tmc/helpers/API_Header.h"
 
+	// only motor controller and driver for motor 0 available
 	#define DEFAULT_MC  0
-	#define DEFAULT_DRV 1
+	#define DEFAULT_DRV 0
 
 	#include "modules/SelectModule.h"
 
@@ -24,15 +25,15 @@
 
 	typedef struct
 	{
-		uint32_t maximumCurrent;
+		uint16_t adc_I0_offset;
+		uint16_t adc_I1_offset;
+		uint16_t dualShuntFactor;		// u8.u8
+		uint16_t maximumCurrent;
+
 		uint32_t openLoopCurrent;
 		uint32_t pwm_freq;
 		int32_t maxPositioningSpeed;
 		int32_t acceleration;
-
-		uint16_t adc_I0_offset;
-		uint16_t adc_I1_offset;
-		uint16_t dualShuntFactor;		// u8.u8
 
 		uint16_t pidTorque_P_param;
 		uint16_t pidTorque_I_param;
@@ -41,17 +42,19 @@
 
 		uint8_t motorType;
 		uint8_t motorPolePairs;
+		uint8_t shaftBit;
 		uint8_t commutationMode;
-		uint8_t useVelocityRamp;
 
+		uint8_t useVelocityRamp;
 		uint8_t hallPolarity;
 		uint8_t hallDirection;
-		int16_t hallPhiEOffset;
 		uint8_t hallInterpolation;
+
+		int16_t hallPhiEOffset;
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;
-	TMotorConfig motorConfig;
+	TMotorConfig motorConfig[NUMBER_OF_MOTORS];
 
 	// commutation modes
 	#define COMM_MODE_FOC_DISABLED			0

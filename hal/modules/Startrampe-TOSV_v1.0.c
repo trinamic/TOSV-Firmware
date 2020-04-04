@@ -1,14 +1,14 @@
 /*
- * TMCM-0020.c
+ * Startrampe-TOSV.c
  *
  *  Created on: 31.03.2020
  *      Author: ED
  */
 
-#include "TMCM-0020_v1.0.h"
 #include "BLDC.h"
+#include "Startrampe-TOSV_v1.0.h"
 
-#if DEVICE==TMCM_0020_V10
+#if DEVICE==STARTRAMPE_TOSV_V10
 
 // general module settings
 const char *VersionString="0020V100";
@@ -29,41 +29,43 @@ void tmcm_initModuleConfig()
 
 void tmcm_initMotorConfig()
 {
-	motorConfig.maxPositioningSpeed 		= 4000;
-	motorConfig.acceleration				= 2000;
-	motorConfig.useVelocityRamp				= true;
-	motorConfig.maximumCurrent 				= 4000;
-	motorConfig.openLoopCurrent				= 1000;
-	motorConfig.motorType					= TMC4671_THREE_PHASE_BLDC;
-	motorConfig.motorPolePairs				= 4;
-	motorConfig.commutationMode				= COMM_MODE_FOC_OPEN_LOOP;
-	motorConfig.adc_I0_offset				= 33500;
-	motorConfig.adc_I1_offset				= 33500;
+	motorConfig[0].maximumCurrent 			= 3000;
 
-	motorConfig.hallPolarity 				= 1;
-	motorConfig.hallDirection				= 0;
-	motorConfig.hallInterpolation			= 0;
-	motorConfig.hallPhiEOffset				= 0;
+	motorConfig[0].maxPositioningSpeed 		= 4000;
+	motorConfig[0].acceleration				= 2000;
+	motorConfig[0].useVelocityRamp			= true;
+	motorConfig[0].openLoopCurrent			= 1000;
+	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
+	motorConfig[0].motorPolePairs			= 4;
+	motorConfig[0].commutationMode			= COMM_MODE_FOC_DISABLED;
+	motorConfig[0].adc_I0_offset			= 33200;
+	motorConfig[0].adc_I1_offset			= 33200;
 
-	motorConfig.dualShuntFactor				= 230;// u8.s8 // todo: check with current probe! (ED)
+	motorConfig[0].hallPolarity 			= 1;
+	motorConfig[0].hallDirection			= 0;
+	motorConfig[0].hallInterpolation		= 1;
+	motorConfig[0].hallPhiEOffset			= 0;
 
-	motorConfig.pidTorque_P_param			= 300;
-	motorConfig.pidTorque_I_param			= 300;
-	motorConfig.pidVelocity_P_param			= 300;
-	motorConfig.pidVelocity_I_param			= 100;
+	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
+	motorConfig[0].shaftBit					= 0;
 
-	motorConfig.pwm_freq 					= 25000;
+	motorConfig[0].pidTorque_P_param		= 300;
+	motorConfig[0].pidTorque_I_param		= 300;
+	motorConfig[0].pidVelocity_P_param		= 300;
+	motorConfig[0].pidVelocity_I_param		= 100;
+
+	motorConfig[0].pwm_freq 				= 25000;
 
 	// init ramp generator
-	tmc_linearRamp_init(&rampGenerator);
+	tmc_linearRamp_init(&rampGenerator[0]);
 }
 
 void tmcm_updateConfig()
 {
 	// === configure linear ramp generator
-	rampGenerator.maxVelocity  = motorConfig.maxPositioningSpeed;
-	rampGenerator.acceleration = motorConfig.acceleration;
-	rampGenerator.rampEnabled  = motorConfig.useVelocityRamp;
+	rampGenerator[0].maxVelocity  = motorConfig[0].maxPositioningSpeed;
+	rampGenerator[0].acceleration = motorConfig[0].acceleration;
+	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control
@@ -72,7 +74,7 @@ void tmcm_updateConfig()
 	// === configure TMC4671 ===
 
 	// Motor type &  PWM configuration
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, ((u32)motorConfig.motorType << TMC4671_MOTOR_TYPE_SHIFT) | motorConfig.motorPolePairs);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, ((u32)motorConfig[0].motorType << TMC4671_MOTOR_TYPE_SHIFT) | motorConfig[0].motorPolePairs);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_POLARITIES, 0x00000000);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_MAXCNT, 0x00000F9F);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_BBM_H_BBM_L, 0x00001919);
@@ -84,22 +86,22 @@ void tmcm_updateConfig()
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_dsADC_MCLK_A, 0x10000000);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_dsADC_MCLK_B, 0x00000000);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_dsADC_MDEC_B_MDEC_A, 0x014E014E);
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I0_SCALE_OFFSET, 0x01000000 | motorConfig.adc_I0_offset);
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I1_SCALE_OFFSET, 0x01000000 | motorConfig.adc_I1_offset);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I0_SCALE_OFFSET, 0x01000000 | motorConfig[0].adc_I0_offset);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I1_SCALE_OFFSET, 0x01000000 | motorConfig[0].adc_I1_offset);
 
 	// hall configuration
 	bldc_updateHallSettings(DEFAULT_MC);
 
 	// PI configuration
-	tmc4671_setTorqueFluxPI(DEFAULT_MC, motorConfig.pidTorque_P_param, motorConfig.pidTorque_I_param);
-	tmc4671_setVelocityPI(DEFAULT_MC, motorConfig.pidVelocity_P_param, motorConfig.pidVelocity_I_param);
+	tmc4671_setTorqueFluxPI(DEFAULT_MC, motorConfig[0].pidTorque_P_param, motorConfig[0].pidTorque_I_param);
+	tmc4671_setVelocityPI(DEFAULT_MC, motorConfig[0].pidVelocity_P_param, motorConfig[0].pidVelocity_I_param);
 
 	// limit configuration
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig.maxPositioningSpeed * motorConfig.motorPolePairs);
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_OPENLOOP_ACCELERATION, motorConfig.acceleration);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig[0].maxPositioningSpeed * motorConfig[0].motorPolePairs);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_OPENLOOP_ACCELERATION, motorConfig[0].acceleration);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PIDOUT_UQ_UD_LIMITS, 0x7FFF);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_TORQUE_FLUX_TARGET_DDT_LIMITS, 0x7FFF);
-	tmc4671_setTorqueFluxLimit_mA(DEFAULT_MC, motorConfig.dualShuntFactor, motorConfig.maximumCurrent);
+	tmc4671_setTorqueFluxLimit_mA(DEFAULT_MC, motorConfig[0].dualShuntFactor, motorConfig[0].maximumCurrent);
 
 	// reset target values
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_UQ_UD_EXT, 0);
