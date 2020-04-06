@@ -9,6 +9,7 @@
 #include "hal/system/SysTick.h"
 #include "hal/system/SystemInfo.h"
 #include "hal/system/Debug.h"
+#include "hal/comm/Eeprom.h"
 #include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
 
@@ -19,9 +20,8 @@
 	#define AIRCR_VECTKEY_MASK    ((uint32_t)0x05FA0000)
 
 	uint8_t ResetRequested;
-	uint32_t TMCLLastError;
-	volatile uint32_t TMCLTickTimer;
 	extern const char *VersionString;
+	uint32_t TMCM_MOTOR_CONFIG_SIZE = sizeof(TMotorConfig);
 
 	// local used functions
 	uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, int32_t *value);
@@ -32,6 +32,7 @@
 	void tmcl_setOutput();
 	void tmcl_getInput();
 	void tmcl_getVersion();
+	void tmcl_firmwareDefault();
 	void tmcl_boot();
 	void tmcl_softwareReset();
 
@@ -86,6 +87,9 @@ void tmcl_executeActualCommand()
     	case TMCL_GetVersion:
     		tmcl_getVersion();
     		break;
+        case TMCL_FactoryDefault:
+        	tmcl_firmwareDefault();
+        	break;
         case TMCL_readRegisterChannel_1:
         	if (ActualCommand.Motor == 0)
         		ActualReply.Value.Int32 = tmc4671_readInt(DEFAULT_MC, ActualCommand.Type);
@@ -317,6 +321,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getAdcI0Offset(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].adc_I0_offset-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].adc_I0_offset, sizeof(motorConfig[motor].adc_I0_offset));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].adc_I0_offset-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].adc_I0_offset, sizeof(motorConfig[motor].adc_I0_offset));
 				}
 				break;
 			case 9: // dual-shunt adc_I1 offset
@@ -328,6 +338,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getAdcI1Offset(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].adc_I1_offset-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].adc_I1_offset, sizeof(motorConfig[motor].adc_I1_offset));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].adc_I1_offset-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].adc_I1_offset, sizeof(motorConfig[motor].adc_I1_offset));
 				}
 				break;
 
@@ -342,6 +358,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getMotorPolePairs(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].motorPolePairs-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].motorPolePairs, sizeof(motorConfig[motor].motorPolePairs));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].motorPolePairs-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].motorPolePairs, sizeof(motorConfig[motor].motorPolePairs));
 				}
 				break;
 			case 11: // max current
@@ -353,6 +375,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getMaxMotorCurrent(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maximumCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maximumCurrent, sizeof(motorConfig[motor].maximumCurrent));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maximumCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maximumCurrent, sizeof(motorConfig[motor].maximumCurrent));
 				}
 				break;
 			case 12: // open loop current
@@ -364,6 +392,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].openLoopCurrent;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].openLoopCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].openLoopCurrent, sizeof(motorConfig[motor].openLoopCurrent));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].openLoopCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].openLoopCurrent, sizeof(motorConfig[motor].openLoopCurrent));
 				}
 				break;
 		      case 13: // motor direction (shaftBit)
@@ -372,6 +406,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 		              errors = REPLY_INVALID_VALUE;
 		          } else if (command == TMCL_GAP) {
 		            *value = bldc_getMotorDirection(motor);
+		          } else if (command == TMCL_STAP) {
+		        	  eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].shaftBit-(u32)&motorConfig[motor],
+		        			  (u8 *)&motorConfig[motor].shaftBit, sizeof(motorConfig[motor].shaftBit));
+		          } else if (command == TMCL_RSAP) {
+		        	  eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].shaftBit-(u32)&motorConfig[motor],
+		        			  (u8 *)&motorConfig[motor].shaftBit, sizeof(motorConfig[motor].shaftBit));
 		          }
 		          break;
 			case 14: // motor type
@@ -387,6 +427,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getCommutationMode(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].commutationMode-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].commutationMode, sizeof(motorConfig[motor].commutationMode));
 				}
 				break;
 
@@ -399,6 +445,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					tmc4671_writeInt(motor, TMC4671_PWM_MAXCNT, 25000000 / (*value) * 4 - 1);
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pwm_freq;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pwm_freq-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].pwm_freq, sizeof(motorConfig[motor].pwm_freq));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pwm_freq-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].pwm_freq, sizeof(motorConfig[motor].pwm_freq));
 				}
 				break;
 			case 17: // placeholder for PWM_BBM_H time
@@ -452,6 +504,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].maxPositioningSpeed;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPositioningSpeed-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxPositioningSpeed, sizeof(motorConfig[motor].maxPositioningSpeed));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPositioningSpeed-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxPositioningSpeed, sizeof(motorConfig[motor].maxPositioningSpeed));
 				}
 				break;
 			case 29: // enable velocity ramp
@@ -461,6 +519,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].useVelocityRamp ? 1:0;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].useVelocityRamp-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].useVelocityRamp, sizeof(motorConfig[motor].useVelocityRamp));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].useVelocityRamp-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].useVelocityRamp, sizeof(motorConfig[motor].useVelocityRamp));
 				}
 				break;
 			case 30: // acceleration
@@ -470,6 +534,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].acceleration;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].acceleration-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].acceleration, sizeof(motorConfig[motor].acceleration));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].acceleration-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].acceleration, sizeof(motorConfig[motor].acceleration));
 				}
 				break;
 			case 31: // placeholder for deceleration (ED)
@@ -489,6 +559,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					}
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidTorque_P_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidTorque_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidTorque_P_param, sizeof(motorConfig[motor].pidTorque_P_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidTorque_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidTorque_P_param, sizeof(motorConfig[motor].pidTorque_P_param));
 				}
 				break;
 			case 36: // torque I
@@ -503,6 +579,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					}
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidTorque_I_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidTorque_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidTorque_I_param, sizeof(motorConfig[motor].pidTorque_I_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidTorque_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidTorque_I_param, sizeof(motorConfig[motor].pidTorque_I_param));
 				}
 				break;
 			case 37: // velocity P
@@ -517,6 +599,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidVelocity_P_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVelocity_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVelocity_P_param, sizeof(motorConfig[motor].pidVelocity_P_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVelocity_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVelocity_P_param, sizeof(motorConfig[motor].pidVelocity_P_param));
 				}
 				break;
 			case 38: // velocity I
@@ -531,6 +619,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					}
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidVelocity_I_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVelocity_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVelocity_I_param, sizeof(motorConfig[motor].pidVelocity_I_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVelocity_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVelocity_I_param, sizeof(motorConfig[motor].pidVelocity_I_param));
 				}
 				break;
 
@@ -598,6 +692,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_GAP) {
 					motorConfig[motor].hallPolarity = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_POLARITY_MASK) ? 1 : 0;
 					*value = motorConfig[motor].hallPolarity;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallPolarity-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallPolarity, sizeof(motorConfig[motor].hallPolarity));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallPolarity-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallPolarity, sizeof(motorConfig[motor].hallPolarity));
 				}
 				break;
 			case 51: // hall direction
@@ -613,6 +713,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_GAP) {
 					motorConfig[motor].hallDirection = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_DIRECTION_MASK) ? 1 : 0;
 					*value = motorConfig[motor].hallDirection;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallDirection-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallDirection, sizeof(motorConfig[motor].hallDirection));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallPolarity-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallDirection, sizeof(motorConfig[motor].hallDirection));
 				}
 				break;
 			case 52: // hall interpolation
@@ -628,6 +734,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_GAP) {
 					motorConfig[motor].hallInterpolation = (tmc4671_readInt(motor, TMC4671_HALL_MODE) & TMC4671_HALL_INTERPOLATION_MASK) ? 1 : 0;
 					*value = motorConfig[motor].hallInterpolation;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallInterpolation-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallInterpolation, sizeof(motorConfig[motor].hallInterpolation));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallInterpolation-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallInterpolation, sizeof(motorConfig[motor].hallInterpolation));
 				}
 				break;
 			case 53: // hall phi_e offset
@@ -638,6 +750,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_GAP) {
 					motorConfig[motor].hallPhiEOffset = FIELD_GET(tmc4671_readInt(motor, TMC4671_HALL_PHI_E_PHI_M_OFFSET), TMC4671_HALL_PHI_E_OFFSET_MASK, TMC4671_HALL_PHI_E_OFFSET_SHIFT);
 					*value = motorConfig[motor].hallPhiEOffset;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallPhiEOffset-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallPhiEOffset, sizeof(motorConfig[motor].hallPhiEOffset));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].hallPhiEOffset-(u32)&motorConfig[motor],
+						(u8 *)&motorConfig[motor].hallPhiEOffset, sizeof(motorConfig[motor].hallPhiEOffset));
 				}
 				break;
 			case 54: // raw hall sensor inputs
@@ -750,7 +868,6 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					*value = tmcm_getDriverState(motor);
 				}
 				break;
-
 			default:
 				ActualReply.Status = REPLY_WRONG_TYPE;
 				break;
@@ -816,6 +933,16 @@ void tmcl_getVersion()
 		ActualReply.Value.Byte[2] = SW_TYPE_LOW;
 		ActualReply.Value.Byte[1] = SW_VERSION_HIGH;
 		ActualReply.Value.Byte[0] = SW_VERSION_LOW;
+	}
+}
+
+/* reset EEPROM to firmware defaults */
+void tmcl_firmwareDefault()
+{
+	if(ActualCommand.Type==0 && ActualCommand.Motor==0 && ActualCommand.Value.Int32==1234)
+	{
+		eeprom_writeConfigByte(TMCM_ADDR_EEPROM_MAGIC, 0);
+		tmcl_resetCPU(true);
 	}
 }
 

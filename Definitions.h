@@ -82,6 +82,10 @@
 	extern void tmcm_enableCsDragon(uint8_t motor);
 	extern void tmcm_disableCsDragon(uint8_t motor);
 
+	// EEPROM control
+	void tmcm_enableCsMem();
+	void tmcm_disableCsMem();
+
 	// IOs
 	extern void tmcm_clearModuleSpecificIOPin(uint8_t pin);
 	extern void tmcm_setModuleSpecificIOPin(uint8_t pin);

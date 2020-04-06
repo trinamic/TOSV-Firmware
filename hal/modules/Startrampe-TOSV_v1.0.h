@@ -28,9 +28,9 @@
 	#define MAX_ACCELERATION			(int32_t)100000
 	#define TMCM_MAX_CURRENT 			(int32_t)5000
 
-	#define USE_USB_INTERFACE
-	#define USE_ALIVE_LED
+	#define EEPROM_SPI1_ON_PB3_PB4_PB5
 
+	#define USE_USB_INTERFACE
 	#define USBD_VID                        0x2A3C
 	#define USBD_PID                        0x0700
 	#define USBD_PRODUCT_FS_STRING          "Evaluation Device"
@@ -52,6 +52,8 @@
 
 	#define SW_VERSION_HIGH 	1
 	#define SW_VERSION_LOW  	0
+
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x64	// 100
 
 	#define WEASEL_SPI3_ON_PC10_PC11_PC12
 	#define DRAGON_SPI3_ON_PC10_PC11_PC12

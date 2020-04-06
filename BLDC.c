@@ -212,7 +212,6 @@ void bldc_setAdcI1Offset(uint8_t motor, uint16_t offset)
 
 uint8_t bldc_getMotorPolePairs(uint8_t motor)
 {
-	motorConfig[motor].motorPolePairs = tmc4671_getPolePairs(motor);
 	return motorConfig[motor].motorPolePairs;
 }
 

@@ -149,6 +149,16 @@ void tmcm_initModuleSpecificIO()
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 
+	// outputs port B
+	GPIO_StructInit(&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6; 		// CS_EEPROM
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	GPIOB->BSRRL = GPIO_Pin_6;						// disable CS_EEPROM
+
 	// === enable port C ===
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
@@ -296,6 +306,16 @@ void tmcm_disableCsDragon(uint8_t motor)
 {
 	if (motor == DEFAULT_DRV)
 		GPIOE->BSRRL = GPIO_Pin_15;
+}
+
+void tmcm_enableCsMem()
+{
+	GPIOB->BSRRH = GPIO_Pin_6;
+}
+
+void tmcm_disableCsMem()
+{
+	GPIOB->BSRRL = GPIO_Pin_6;
 }
 
 void tmcm_clearModuleSpecificIOPin(uint8_t pin)

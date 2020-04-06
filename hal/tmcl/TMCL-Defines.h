@@ -29,6 +29,7 @@
 	#define TMCL_SIO 						14
 	#define TMCL_GIO 						15
 	#define TMCL_GetVersion 				136
+	#define TMCL_FactoryDefault 			137
 	#define TMCL_writeRegisterChannel_1		146
 	#define TMCL_writeRegisterChannel_2		147
 	#define TMCL_readRegisterChannel_1		148

@@ -6,6 +6,7 @@
  */
 
 #include "hal/system/Cpu.h"
+#include "hal/comm/Eeprom.h"
 #include "hal/system/SysTick.h"
 #include "hal/system/SystemInfo.h"
 #include "hal/comm/SPI.h"
@@ -35,6 +36,7 @@ int main(void)
 	systick_init();
 
 	spi_init();
+	eeprom_initConfig();
 
 	// initialize communication interfaces
 #ifdef USE_USB_INTERFACE

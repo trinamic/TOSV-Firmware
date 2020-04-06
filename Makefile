@@ -101,6 +101,7 @@ SRC += hal/system/Cpu.c
 SRC += hal/system/SysTick.c
 SRC += hal/system/Debug.c
 SRC += hal/system/SystemInfo.c
+SRC += hal/comm/Eeprom.c
 SRC += hal/comm/SPI.c
 SRC += hal/comm/USB.c
 SRC += hal/Flags.c
