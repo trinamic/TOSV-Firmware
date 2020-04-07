@@ -13,6 +13,10 @@
 #include "BLDC.h"
 #include "TMCL.h"
 
+#if defined(USE_UART_INTERFACE)
+	#include "hal/comm/UART.h"
+#endif
+
 #if defined(USE_USB_INTERFACE)
 	#include "hal/comm/USB.h"
 #endif
@@ -39,6 +43,10 @@ int main(void)
 	eeprom_initConfig();
 
 	// initialize communication interfaces
+#ifdef USE_UART_INTERFACE
+	uart_init(moduleConfig.baudrate);
+#endif
+
 #ifdef USE_USB_INTERFACE
 	usb_init();
 #endif

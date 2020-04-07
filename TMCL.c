@@ -13,6 +13,10 @@
 #include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
 
+#ifdef USE_UART_INTERFACE
+	#include "hal/comm/UART.h"
+#endif
+
 #ifdef USE_USB_INTERFACE
 	#include "hal/comm/USB.h"
 #endif
@@ -125,6 +129,12 @@ void tmcl_processCommand()
 	static uint8_t TMCLCommandState;
     uint32_t i;
 
+#ifdef USE_UART_INTERFACE
+    uint8_t Byte;
+    static uint8_t UARTCmd[9];
+    static uint8_t UARTCount;
+#endif
+
 #ifdef USE_USB_INTERFACE
     uint8_t USBCmd[9];
     uint8_t USBReply[9];
@@ -132,9 +142,62 @@ void tmcl_processCommand()
 
     /* send reply for last TMCL request */
 
+#ifdef USE_UART_INTERFACE
+
+    if(TMCLCommandState==TCS_UART)  // reply via UART
+    {
+    	if(TMCLReplyFormat==RF_STANDARD)
+    	{
+    		uint8_t Checksum = moduleConfig.serialHostAddress+moduleConfig.serialModuleAddress+
+    							ActualReply.Status+ActualReply.Opcode+
+								ActualReply.Value.Byte[3]+ActualReply.Value.Byte[2]+
+								ActualReply.Value.Byte[1]+ActualReply.Value.Byte[0];
+
+    		uart_write(moduleConfig.serialHostAddress);
+    		uart_write(moduleConfig.serialModuleAddress);
+    		uart_write(ActualReply.Status);
+    		uart_write(ActualReply.Opcode);
+    		uart_write(ActualReply.Value.Byte[3]);
+    		uart_write(ActualReply.Value.Byte[2]);
+    		uart_write(ActualReply.Value.Byte[1]);
+    		uart_write(ActualReply.Value.Byte[0]);
+    		uart_write(Checksum);
+    	}
+    	else if(TMCLReplyFormat==RF_SPECIAL)
+    	{
+    		for(i=0; i<9; i++)
+    		{
+    			uart_write(SpecialReply[i]);
+    		}
+    	}
+    }
+    else if(TMCLCommandState==TCS_UART_ERROR)  // last command had a wrong checksum
+    {
+    	ActualReply.Opcode = 0;
+    	ActualReply.Status = REPLY_CHKERR;
+    	ActualReply.Value.Int32 = 0;
+
+    	uint8_t Checksum = moduleConfig.serialHostAddress + moduleConfig.serialModuleAddress+
+    		  	  	  	  ActualReply.Status+ActualReply.Opcode+
+						  ActualReply.Value.Byte[3] + ActualReply.Value.Byte[2]+
+						  ActualReply.Value.Byte[1] + ActualReply.Value.Byte[0];
+
+    	uart_write(moduleConfig.serialHostAddress);
+    	uart_write(moduleConfig.serialModuleAddress);
+    	uart_write(ActualReply.Status);
+    	uart_write(ActualReply.Opcode);
+    	uart_write(ActualReply.Value.Byte[3]);
+    	uart_write(ActualReply.Value.Byte[2]);
+    	uart_write(ActualReply.Value.Byte[1]);
+    	uart_write(ActualReply.Value.Byte[0]);
+    	uart_write(Checksum);
+    }
+
+#endif
+
 #ifdef USE_USB_INTERFACE
 
-    if(TMCLCommandState==TCS_USB)
+    if(TMCLCommandState==TCS_USB) // reply via USB
     {
     	if(TMCLReplyFormat==RF_STANDARD)
     	{
@@ -200,6 +263,44 @@ void tmcl_processCommand()
 
   	/* read next request */
 
+#ifdef USE_UART_INTERFACE
+
+  	if(uart_read((char *)&Byte))  // new UART request available?
+  	{
+  		if(uart_checkTimeout())
+  			UARTCount=0;  // discard everything when there has been a command timeout
+
+  		UARTCmd[UARTCount++] = Byte;
+
+  		if(UARTCount==9)  // Nine bytes have been received without timeout
+  		{
+  			UARTCount=0;
+  			systemInfo_incCommunicationLoopCounter();
+
+  			if(UARTCmd[0] == moduleConfig.serialModuleAddress)  // is this our address?
+  			{
+  				uint8_t checksum = 0;
+  				for(i=0; i<8; i++)
+  					checksum+=UARTCmd[i];
+
+  				if(checksum==UARTCmd[8])  // is the checksum correct?
+  				{
+  					ActualCommand.Opcode=UARTCmd[1];
+  					ActualCommand.Type=UARTCmd[2];
+  					ActualCommand.Motor=UARTCmd[3];
+  					ActualCommand.Value.Byte[3]=UARTCmd[4];
+  					ActualCommand.Value.Byte[2]=UARTCmd[5];
+  					ActualCommand.Value.Byte[1]=UARTCmd[6];
+  					ActualCommand.Value.Byte[0]=UARTCmd[7];
+  					TMCLCommandState = TCS_UART;
+  				}
+  				else TMCLCommandState = TCS_UART_ERROR;  //Checksum wrong
+  			}
+  		}
+    }
+#endif
+
+
 #ifdef USE_USB_INTERFACE
 
     if(usb_getUSBCmd(USBCmd))
@@ -208,11 +309,11 @@ void tmcl_processCommand()
 
     	if(USBCmd[0] == moduleConfig.serialModuleAddress)	 // check address
     	{
-    		uint8_t Checksum=0;
+    		uint8_t checksum=0;
     		for(i=0; i<8; i++)
-    			Checksum+=USBCmd[i];
+    			checksum+=USBCmd[i];
 
-    		if(Checksum==USBCmd[8])  // check checksum
+    		if(checksum==USBCmd[8])  // check checksum
     		{
     			ActualCommand.Opcode=USBCmd[1];
     			ActualCommand.Type=USBCmd[2];

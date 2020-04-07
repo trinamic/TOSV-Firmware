@@ -103,6 +103,7 @@ SRC += hal/system/Debug.c
 SRC += hal/system/SystemInfo.c
 SRC += hal/comm/Eeprom.c
 SRC += hal/comm/SPI.c
+SRC += hal/comm/UART.c
 SRC += hal/comm/USB.c
 SRC += hal/Flags.c
 

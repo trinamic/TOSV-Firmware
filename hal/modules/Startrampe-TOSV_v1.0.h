@@ -30,6 +30,9 @@
 
 	#define EEPROM_SPI1_ON_PB3_PB4_PB5
 
+	#define USE_UART_INTERFACE
+	#define USE_USART3_ON_PD8_PD9
+
 	#define USE_USB_INTERFACE
 	#define USBD_VID                        0x2A3C
 	#define USBD_PID                        0x0700

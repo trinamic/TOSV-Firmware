@@ -318,6 +318,11 @@ void tmcm_disableCsMem()
 	GPIOB->BSRRL = GPIO_Pin_6;
 }
 
+// RS242/RS485 configuration
+void tmcm_setRS485ToSendMode(){}
+void tmcm_setRS485ToReceiveMode(){}
+uint8_t tmcm_isRS485Sending(){ return false; }
+
 void tmcm_clearModuleSpecificIOPin(uint8_t pin)
 {
 	switch(pin)

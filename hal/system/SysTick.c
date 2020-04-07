@@ -10,6 +10,12 @@
 static volatile uint32_t sysTickTimer = 0;
 static volatile uint8_t sysTickDivFlag = 0;
 
+#ifdef USE_UART_INTERFACE
+	#include "../comm/UART.h"
+	extern volatile uint8_t UARTTimeoutFlag;
+	extern volatile uint32_t UARTTimeoutTimer;
+#endif
+
 void __attribute__ ((interrupt))SysTick_Handler(void);
 
 /* handler for SysTick interrupt */
@@ -19,6 +25,17 @@ void SysTick_Handler(void)
 	{
 		// 1ms timer for systick_getTimer()
 		sysTickTimer++;
+
+#ifdef USE_UART_INTERFACE
+
+		// decrease UART receive timeout
+		if(UARTTimeoutTimer > 0)
+		{
+			UARTTimeoutTimer--;
+			if(UARTTimeoutTimer==0)
+				UARTTimeoutFlag = true;
+		}
+#endif
 
 		sysTickDivFlag = 0;
 	}

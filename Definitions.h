@@ -86,6 +86,11 @@
 	void tmcm_enableCsMem();
 	void tmcm_disableCsMem();
 
+	// UART/RS485 control
+	extern void tmcm_setRS485ToSendMode();
+	extern void tmcm_setRS485ToReceiveMode();
+	extern uint8_t tmcm_isRS485Sending();
+
 	// IOs
 	extern void tmcm_clearModuleSpecificIOPin(uint8_t pin);
 	extern void tmcm_setModuleSpecificIOPin(uint8_t pin);
