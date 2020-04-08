@@ -30,9 +30,11 @@
 
 	#define EEPROM_SPI1_ON_PB3_PB4_PB5
 
+	// ===== UART configuration =====
 	#define USE_UART_INTERFACE
 	#define USE_USART3_ON_PD8_PD9
 
+	// ===== USB configuration =====
 	#define USE_USB_INTERFACE
 	#define USBD_VID                        0x2A3C
 	#define USBD_PID                        0x0700
@@ -47,7 +49,6 @@
 	#include "TMC-API/tmc/ic/TMC4671/TMC4671_Variants.h"
 	#include "TMC-API/tmc/ic/TMC6200/TMC6200.h"
 	#include "TMC-API/tmc/ramp/LinearRamp.h"
-
 
 	// module number in HEX (0020)
 	#define SW_TYPE_HIGH 		0x00

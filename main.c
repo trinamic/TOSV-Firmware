@@ -26,9 +26,6 @@ int main(void)
 {
 	cpu_init();
 
-	// enable interrupts globally
-	__enable_irq();
-
 	// load default values of the module
 	tmcm_initModuleConfig();
 	tmcm_initMotorConfig();

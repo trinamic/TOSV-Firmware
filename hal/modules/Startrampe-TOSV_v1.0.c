@@ -129,7 +129,7 @@ void tmcm_initModuleSpecificIO()
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	// outputs port A
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_15;		// En_Weasel | CS_Weasel
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_15;		// EN_Weasel | CS_Weasel
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;

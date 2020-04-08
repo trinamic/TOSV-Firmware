@@ -18,7 +18,21 @@ endif
 #         will not be considered source files but generated files (assembler
 #         output from the compiler), and will be deleted upon "make clean"!)
 # - CPU_INC_DIR include path for the selected cpu
-ifeq ($(CPU),F205)
+
+ifeq ($(CPU),F103)
+	MCU = cortex-m3
+	SUBMDL = STM32F103xB
+	TARGET = TMC4671_TMC6100_TOSV_REF
+	CPU_INC_DIR = cpu/STM32F103
+	ASRC =  $(CPU_INC_DIR)/cortexm3_macro.s
+
+	# set linker-script name depending on selected run-mode
+	ifeq ($(BOOT_LOADER),TMCM-BL)
+		LDFLAGS =-T $(CPU_INC_DIR)/stm32-tmcm.ld
+	else
+		LDFLAGS =-T $(CPU_INC_DIR)/stm32.ld
+	endif
+else ifeq ($(CPU),F205)
 	MCU = cortex-m3
 	SUBMDL = STM32F205RB
 	TARGET = Startrampe-TOSV
@@ -61,7 +75,31 @@ VECTOR_TABLE_LOCATION = VECT_TAB_ROM
 # list C source files here
 
 # cpu specific C files
-ifeq ($(CPU),F205)
+
+ifeq ($(CPU),F103)
+
+	# cpu
+	SRC += $(CPU_INC_DIR)/stm32f10x_bkp.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_can.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_flash.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_exti.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_adc.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_dma.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_gpio.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_nvic.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_pwr.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_rcc.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_tim.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_usart.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_spi.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_systick.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_it.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_vector.c
+	
+	# modules
+	SRC += hal/modules/TMC4671-TMC6100-TOSV-REF_v1.0.c
+
+else ifeq ($(CPU),F205)
 
 	# cpu
 	SRC += $(CPU_INC_DIR)/system_stm32f2xx.c

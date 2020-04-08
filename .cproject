@@ -2590,6 +2590,7 @@
 		<buildTargets>
 			<target name="clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cs-make</buildCommand>
+				<buildArguments/>
 				<buildTarget>clean</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
@@ -2597,7 +2598,6 @@
 			</target>
 			<target name="all hex F205 256k (Startrampe)" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cs-make</buildCommand>
-				<buildArguments/>
 				<buildTarget>all FORMAT=hex CPU=F205 FLASH_SIZE=256k</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
@@ -2605,8 +2605,23 @@
 			</target>
 			<target name="all bin F205 256k (Startrampe)" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cs-make</buildCommand>
-				<buildArguments/>
 				<buildTarget>all FORMAT=binary CPU=F205 FLASH_SIZE=256k</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="all bin F103 128k (TOSV-REF)" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cs-make</buildCommand>
+				<buildArguments/>
+				<buildTarget>all FORMAT=binary CPU=F103 FLASH_SIZE=128k</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="all hex F103 128k (TOSV-REF)" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cs-make</buildCommand>
+				<buildArguments/>
+				<buildTarget>all FORMAT=hex CPU=F103 FLASH_SIZE=128k</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>

@@ -48,7 +48,17 @@ void SysTick_Handler(void)
 /* initialize SysTick timer */
 void systick_init()
 {
-#if BOARD_CPU == STM32F205
+#if BOARD_CPU == STM32F103
+	/* Select AHB clock(HCLK) as SysTick clock source */
+	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
+	/* SysTick interrupt each 500usec with Core clock equal to 72MHz */
+	SysTick_SetReload(36000);
+	/* Enable SysTick Counter */
+	SysTick_CounterCmd(SysTick_Counter_Enable);
+	NVIC_SystemHandlerPriorityConfig(SystemHandler_SysTick, 3, 0);
+	/* Enable SysTick interrupt */
+	SysTick_ITConfig(ENABLE);
+#elif BOARD_CPU == STM32F205
 	SysTick_Config(7500);
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
 #else

@@ -47,7 +47,39 @@ void spi_init()
 
 #endif
 
-#if defined(WEASEL_SPI3_ON_PC10_PC11_PC12)
+#if defined(WEASEL_SPI2_ON_PB13_PB14_PB15) || defined(DRAGON_SPI2_ON_PB13_PB14_PB15) || defined(EEPROM_SPI2_ON_PB13_PB14_PB15)
+
+	// enable clock for SPI2
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+
+	// enable clock for GPIOB
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+	// use pins B13..B15 for SPI2
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13|GPIO_Pin_15;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	// initialize SPI2
+	SPIInit.SPI_Direction			= SPI_Direction_2Lines_FullDuplex;
+	SPIInit.SPI_Mode				= SPI_Mode_Master;
+	SPIInit.SPI_DataSize			= SPI_DataSize_8b;
+	SPIInit.SPI_CPOL				= SPI_CPOL_High;
+	SPIInit.SPI_CPHA				= SPI_CPHA_2Edge;
+	SPIInit.SPI_NSS					= SPI_NSS_Soft;
+	SPIInit.SPI_BaudRatePrescaler	= SPI_BaudRatePrescaler_16;
+	SPIInit.SPI_FirstBit			= SPI_FirstBit_MSB;
+	SPIInit.SPI_CRCPolynomial		= 0;
+	SPI_Init(SPI2, &SPIInit);
+	SPI_Cmd(SPI2, ENABLE);
+
+#elif defined(WEASEL_SPI3_ON_PC10_PC11_PC12) || defined(DRAGON_SPI3_ON_PC10_PC11_PC12)
 
 	// enable clock for SPI3
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
@@ -84,7 +116,9 @@ void spi_init()
 
 uint8_t weasel_spi_readWriteByte(uint8_t motor, uint8_t data, uint8_t lastTransfer)
 {
-#if defined(WEASEL_SPI3_ON_PC10_PC11_PC12)
+#if defined(WEASEL_SPI2_ON_PB13_PB14_PB15)
+	SPI_TypeDef *spiChannel = SPI2;
+#elif defined(WEASEL_SPI3_ON_PC10_PC11_PC12)
 	SPI_TypeDef *spiChannel = SPI3;
 #endif
 
@@ -105,7 +139,9 @@ uint8_t weasel_spi_readWriteByte(uint8_t motor, uint8_t data, uint8_t lastTransf
 
 uint8_t dragon_spi_readWriteByte(uint8_t motor, uint8_t data, uint8_t lastTransfer)
 {
-#if defined(DRAGON_SPI3_ON_PC10_PC11_PC12)
+#if defined(DRAGON_SPI2_ON_PB13_PB14_PB15)
+	SPI_TypeDef *spiChannel = SPI2;
+#elif defined(DRAGON_SPI3_ON_PC10_PC11_PC12)
 	SPI_TypeDef *spiChannel = SPI3;
 #endif
 
@@ -127,7 +163,9 @@ uint8_t dragon_spi_readWriteByte(uint8_t motor, uint8_t data, uint8_t lastTransf
 /* read and write EEPROM spi data */
 uint8_t eeprom_spi_readWriteByte(uint8_t data, uint8_t lastTransfer)
 {
-#if defined(EEPROM_SPI1_ON_PB3_PB4_PB5)
+#if defined(EEPROM_SPI2_ON_PB13_PB14_PB15)
+	SPI_TypeDef *spiChannel = SPI2;
+#elif defined(EEPROM_SPI1_ON_PB3_PB4_PB5)
 	SPI_TypeDef *spiChannel = SPI1;
 #endif
 

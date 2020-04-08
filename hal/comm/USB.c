@@ -7,11 +7,11 @@
 
 #include "USB.h"
 
+#if defined(USE_USB_INTERFACE)
+
 void __attribute__ ((interrupt))OTG_FS_IRQHandler(void);
 
 #if	(BOARD_CPU == STM32F205)
-
-#if defined(USE_USB_INTERFACE)
 
 typedef struct
 {
@@ -385,8 +385,8 @@ void usb_sendData(uint8_t *buffer, uint32_t size)
 	}
 }
 
-#endif // USE_USB_INTERFACE
-
 #else
 	#error "interrupt handler not defined for selected BOARD_CPU!"
 #endif
+
+#endif // USE_USB_INTERFACE

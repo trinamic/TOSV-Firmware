@@ -1262,6 +1262,7 @@ void tmcl_stopVentilator(void)
 
 
 /* deinit NVIC */
+#if (BOARD_CPU != STM32F103)
 void NVIC_DeInit(void)
 {
 	uint32_t index;
@@ -1277,6 +1278,7 @@ void NVIC_DeInit(void)
 		NVIC->IP[index] = 0x00000000;
 	}
 }
+#endif
 
 /* special command to switch to bootloader mode */
 void tmcl_boot()
@@ -1286,13 +1288,31 @@ void tmcl_boot()
 			ActualCommand.Value.Byte[1]==0xc5 && ActualCommand.Value.Byte[0]==0xd6)
 	{
 		for (int i = 0; i < NUMBER_OF_MOTORS; i++)
+		{
 			tmcm_disableDriver(i);
+
+#ifdef USE_BRAKECHOPPER
+			//motorConfig[i].brakeChopperEnabled = 0;
+			//tasks_updateBrakeChopperConfig(i);
+#endif
+		}
 
 #ifdef USE_USB_INTERFACE
 		usb_detach();
 		uint32_t lastCheck = systick_getTimer();
 		while(abs(systick_getTimer()-lastCheck) < 1000) {;}
 #endif
+
+#if BOARD_CPU==STM32F103
+		asm volatile("CPSID I\n");
+		NVIC_DeInit();
+		SysTick->CTRL = 0;
+		DMA_Cmd(DMA1_Channel1, DISABLE);
+		DMA_DeInit(DMA1_Channel1);
+		ADC_DeInit(ADC1);
+		EXTI_DeInit();
+		TIM_DeInit(TIM1);
+#else
 	    __disable_irq();
 		NVIC_DeInit();
 		SysTick->CTRL = 0;
@@ -1301,7 +1321,7 @@ void tmcl_boot()
 		ADC_DeInit();
 	    EXTI_DeInit();
 	    TIM_DeInit(TIM1);
-
+#endif
 	    tmcl_resetCPU(false);
 	}
 }

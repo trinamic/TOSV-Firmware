@@ -27,14 +27,37 @@ volatile uint32_t UARTTimeoutTimer;
 
 USART_TypeDef* actualUart = USART3;
 
-#if defined(USE_USART3_ON_PD8_PD9)
+#if defined(USE_USART1_ON_PB6_PB7)
+	void __attribute__ ((interrupt))USART1_IRQHandler(void);
+#elif defined(USE_USART3_ON_PD8_PD9)
 	void __attribute__ ((interrupt))USART3_IRQHandler(void);
 #endif
 
 /* initialize UART3/UART6 (bitrate code: 0..11) */
 void uart_init(uint32_t baudRate)
 {
-#if defined(USE_USART3_ON_PD8_PD9)
+#if defined(USE_USART1_ON_PB6_PB7)
+
+	actualUart = USART1;
+
+	// activate UART1 and GPIOB
+	USART_DeInit(USART1);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+	GPIO_PinRemapConfig(GPIO_Remap_USART1, ENABLE);
+
+	// assign UART1-Pins (PB6 and PB7)
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+#elif defined(USE_USART3_ON_PD8_PD9)
 
 	actualUart = USART3;
 
@@ -126,7 +149,9 @@ void uart_init(uint32_t baudRate)
 
 	// activate interrupt for UART
 	NVIC_InitTypeDef NVIC_InitStructure;
-#if defined(USE_USART3_ON_PD8_PD9)
+#if defined(USE_USART1_ON_PB6_PB7)
+	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQChannel; // STM32F103
+#elif defined(USE_USART3_ON_PD8_PD9)
 	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
 #endif
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = UART_INTR_PRI;
@@ -150,7 +175,9 @@ void uart_init(uint32_t baudRate)
 	USART_Cmd(actualUart, ENABLE);
 }
 
-#if defined(USE_USART3_ON_PD8_PD9)
+#if defined(USE_USART1_ON_PB6_PB7)
+void USART1_IRQHandler(void)
+#elif defined(USE_USART3_ON_PD8_PD9)
 void USART3_IRQHandler(void)
 #endif
 {

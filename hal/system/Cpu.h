@@ -9,8 +9,10 @@
 
 	#include "../Hal_Definitions.h"
 
-#if BOARD_CPU==STM32F205
-	#define CKTIM	((u32)120000000uL) 	// silicon running at 120MHz resolution: 1Hz
+#if BOARD_CPU==STM32F103
+	#define CKTIM 	((uint32_t)72000000uL)		// silicon running at 72MHz
+#elif BOARD_CPU==STM32F205
+	#define CKTIM	((uint32_t)120000000uL) 	// silicon running at 120MHz
 #else
 	#error "CKTIM() for BOARD_CPU not supported!"
 #endif
