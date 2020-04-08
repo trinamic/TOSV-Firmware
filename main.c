@@ -12,6 +12,7 @@
 #include "hal/comm/SPI.h"
 #include "BLDC.h"
 #include "TMCL.h"
+#include "TOSV.h"
 
 #if defined(USE_UART_INTERFACE)
 	#include "hal/comm/UART.h"
@@ -58,6 +59,9 @@ int main(void)
 	// initialize ICs
 	tmcm_updateConfig();
 
+  //Initialize ventilator control
+  TOSV_init();
+
 	for(;;)
 	{
 		systemInfo_incMainLoopCounter();
@@ -68,6 +72,9 @@ int main(void)
 		// do motion control
 		bldc_processBLDC();
 
+    // do ventilator control
+    TOSV_process();
+    
 		// I am alive LED
 		static uint32_t ledCounterCheckTime = 0;
 		if (abs(systick_getTimer()-ledCounterCheckTime) > 1000)

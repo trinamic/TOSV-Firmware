@@ -5,9 +5,9 @@ OUTDIR = $(RUN_MODE)
 
 # is Bootloader support desired?
 ifeq ($(FORMAT),hex)
-	BOOT_LOADER=TMCM-BL
+	BOOT_LOADER?=TMCM-BL
 else ifeq ($(FORMAT),binary)
-	BOOT_LOADER=TMCM-NO-BL
+	BOOT_LOADER?=TMCM-NO-BL
 endif
 
 # MCU name, submodel
@@ -111,6 +111,9 @@ SRC += hal/Flags.c
 SRC += TMCL.c
 SRC += BLDC.c
 SRC += main.c
+
+# the Trinamic Open Source Ventilator module
+SRC += TOSV.c
 
 # TMC_API
 SRC += TMC-API/tmc/helpers/Functions.c

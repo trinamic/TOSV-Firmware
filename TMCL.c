@@ -12,6 +12,7 @@
 #include "hal/comm/Eeprom.h"
 #include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
+#include "TOSV.h"
 
 #ifdef USE_UART_INTERFACE
 	#include "hal/comm/UART.h"
@@ -39,6 +40,11 @@
 	void tmcl_firmwareDefault();
 	void tmcl_boot();
 	void tmcl_softwareReset();
+
+  void tmcl_setVentilatorParameter(void);
+  void tmcl_getVentilatorParameter(void);
+  void tmcl_startVentilator(void);
+  void tmcl_stopVentilator(void);
 
 // => SPI wrapper for TMC-API
 u8 tmc4671_readwriteByte(u8 motor, u8 data, u8 lastTransfer)
@@ -106,6 +112,25 @@ void tmcl_executeActualCommand()
         	else if (ActualCommand.Motor == 1)
         		tmc6200_writeInt(DEFAULT_DRV, ActualCommand.Type, ActualCommand.Value.Int32);
           break;
+
+			case TMCL_SetVentilatorParameter:
+				tmcl_setVentilatorParameter();
+				break;
+				
+			case TMCL_GetVentilatorParameter:
+				tmcl_getVentilatorParameter();
+				break;
+				
+			case TMCL_StartVentilator:
+			case TMCL_UF0:   //TEST_OK: to be removed later
+				tmcl_startVentilator();
+				break;
+				
+			case TMCL_StopVentilator:
+			case TMCL_UF1:   //TEST_OK: to be removed later
+				tmcl_stopVentilator();
+				break;
+
     	case TMCL_Boot:
     		tmcl_boot();
     		break;
@@ -875,6 +900,85 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 //			case 63: // brake chopper active
 //				break;
 
+      // ===== TEST_OK: TOSV (to be removed again later) =====
+  		case 200:
+  			if(command==TMCL_SAP)
+  			{
+  			  if(!TOSV_setPEEP(*value)) errors=REPLY_INVALID_VALUE;
+  			}
+  			else if(command==TMCL_GAP)
+  			{
+          *value=TOSV_getPEEP();
+        }
+  			break;
+  			
+  		case 201:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setLimit(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{
+  				*value=TOSV_getLimit();
+  			}
+  			break;
+  			
+  		case 202:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setRiseTime(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{	
+  				*value=TOSV_getRiseTime();
+  			}
+  			break;
+  			
+  		case 203:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setFallTime(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{
+  				*value=TOSV_getFallTime();
+  			}
+  			break;
+  			
+  		case 204:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setFrequency(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{
+  				*value=TOSV_getFrequency();
+  			}
+  			break;
+  			
+  		case 205:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setItoE(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{
+  				*value=TOSV_getItoE();
+  			}
+  			break;
+  			
+  		case 206:
+  			if(command==TMCL_SAP)
+  			{
+    			if(!TOSV_setVolume(*value)) errors=REPLY_INVALID_VALUE;
+    		}
+  			else if(command==TMCL_GAP)
+  			{
+  				*value=TOSV_getVolume();
+  			}
+  			break;
+  			
+       
 			// ===== debugging =====
 
 			case 240: // debug value 0
@@ -1046,6 +1150,116 @@ void tmcl_firmwareDefault()
 		tmcl_resetCPU(true);
 	}
 }
+void tmcl_setVentilatorParameter(void)
+{
+	if(ActualCommand.Motor==0)
+	{
+  	switch(ActualCommand.Type)
+  	{
+  		case 0:
+  			if(!TOSV_setPEEP(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 1:
+  			if(!TOSV_setLimit(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 2:
+  			if(!TOSV_setRiseTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 3:
+  			if(!TOSV_setFallTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 4:
+  			if(!TOSV_setFrequency(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 5:
+  			if(!TOSV_setItoE(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		case 6:
+  			if(!TOSV_setVolume(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+  			break;
+  			
+  		default:
+  			ActualReply.Status=REPLY_WRONG_TYPE;
+  			break;
+  	}
+  }
+  else ActualReply.Status=REPLY_INVALID_VALUE;
+}
+
+void tmcl_getVentilatorParameter(void)
+{
+	if(ActualCommand.Motor==0)
+	{
+  	switch(ActualCommand.Type)
+  	{
+  		case 0:
+  			ActualReply.Value.Int32=TOSV_getPEEP();
+  			break;
+  			
+  		case 1:
+  			ActualReply.Value.Int32=TOSV_getLimit();
+  			break;
+  			
+  		case 2:
+  			ActualReply.Value.Int32=TOSV_getRiseTime();
+  			break;
+  			
+  		case 3:
+  			ActualReply.Value.Int32=TOSV_getFallTime();
+  			break;
+  			
+  		case 4:
+  			ActualReply.Value.Int32=TOSV_getFrequency();
+  			break;
+  			
+  		case 5:
+  			ActualReply.Value.Int32=TOSV_getItoE();
+  			break;
+  			
+  		case 6:
+  			ActualReply.Value.Int32=TOSV_getVolume();
+  			break;
+  			
+  		default:
+  			ActualReply.Status=REPLY_WRONG_TYPE;
+  			break;
+  	}
+  }
+  else ActualReply.Status=REPLY_INVALID_VALUE;
+}
+
+void tmcl_startVentilator(void)
+{
+	if(ActualCommand.Type==0)
+	{
+		if(ActualCommand.Motor==0 && ActualCommand.Value.Int32==0x1234)
+		{
+			if(!TOSV_startVentilator()) ActualReply.Status=REPLY_CMD_NOT_AVAILABLE;
+		}
+		else ActualReply.Status=REPLY_INVALID_VALUE;
+	}
+	else ActualReply.Status=REPLY_WRONG_TYPE;
+}
+
+void tmcl_stopVentilator(void)
+{
+	if(ActualCommand.Type==0)
+	{
+		if(ActualCommand.Motor==0 && ActualCommand.Value.Int32==0x4321)
+		{
+			TOSV_stopVentilator();
+		}
+		else ActualReply.Status=REPLY_INVALID_VALUE;
+	}
+	else ActualReply.Status=REPLY_WRONG_TYPE;
+}
+
 
 /* deinit NVIC */
 void NVIC_DeInit(void)
