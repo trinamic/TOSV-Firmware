@@ -5,8 +5,9 @@
  *      Author: ED
  */
 
-#include "BLDC.h"
 #include "TMC4671-TMC6100-TOSV-REF_v1.0.h"
+#include "BLDC.h"
+#include "hal/system/SysTick.h"
 
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
@@ -60,6 +61,9 @@ void tmcm_initMotorConfig()
 
 void tmcm_updateConfig()
 {
+	uint32_t delay = systick_getTimer();
+	while(abs(systick_getTimer()-delay) < 100){;}
+
 	// === configure linear ramp generator
 	rampGenerator[0].maxVelocity  = motorConfig[0].maxPositioningSpeed;
 	rampGenerator[0].acceleration = motorConfig[0].acceleration;
@@ -70,6 +74,9 @@ void tmcm_updateConfig()
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_DRV_CONF, 0);	// BBM_OFF and DRVSTRENGTH to weak
 
 	// === configure TMC4671 ===
+
+	// dummy readout
+	tmc4671_readInt(DEFAULT_MC, TMC4671_MOTOR_TYPE_N_POLE_PAIRS);
 
 	// Motor type &  PWM configuration
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_MOTOR_TYPE_N_POLE_PAIRS, ((u32)motorConfig[0].motorType << TMC4671_MOTOR_TYPE_SHIFT) | motorConfig[0].motorPolePairs);
@@ -135,7 +142,7 @@ void tmcm_initModuleSpecificIO()
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	GPIOA->BSRR = GPIO_Pin_3;						// disable CS_Weasel
 	GPIOA->BSRR = GPIO_Pin_8;						// disable CS_Dragon
-	GPIOA->BRR = GPIO_Pin_9;						// disable RUN_LED
+	GPIOA->BSRR = GPIO_Pin_9;						// disable RUN_LED
 	GPIOA->BRR = GPIO_Pin_10;						// disable ERROR_LED
 	GPIOA->BSRR = GPIO_Pin_15;						// enable EN_Weasel
 

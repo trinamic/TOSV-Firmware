@@ -16,10 +16,16 @@ static volatile uint8_t sysTickDivFlag = 0;
 	extern volatile uint32_t UARTTimeoutTimer;
 #endif
 
-void __attribute__ ((interrupt))SysTick_Handler(void);
+#if (BOARD_CPU==STM32F205)
+	void __attribute__ ((interrupt))SysTick_Handler(void);
+#endif
 
 /* handler for SysTick interrupt */
+#if (BOARD_CPU == STM32F103)
+void SysTickHandler(void)
+#else
 void SysTick_Handler(void)
+#endif
 {
 	if(sysTickDivFlag)
 	{

@@ -56,8 +56,8 @@ int main(void)
 	// initialize ICs
 	tmcm_updateConfig();
 
-  //Initialize ventilator control
-  TOSV_init();
+	// initialize ventilator control
+	TOSV_init();
 
 	for(;;)
 	{
@@ -69,9 +69,9 @@ int main(void)
 		// do motion control
 		bldc_processBLDC();
 
-    // do ventilator control
-    TOSV_process();
-    
+		// do ventilator control
+		TOSV_process();
+
 		// I am alive LED
 		static uint32_t ledCounterCheckTime = 0;
 		if (abs(systick_getTimer()-ledCounterCheckTime) > 1000)
