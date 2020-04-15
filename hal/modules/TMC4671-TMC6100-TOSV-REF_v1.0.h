@@ -51,6 +51,14 @@
 
 	TMC_LinearRamp rampGenerator[NUMBER_OF_MOTORS];
 
+	#define MAX_SUPPLY_VOLTAGE		3600 // 36.0V
+	#define ON__SUPPLY_VOLTAGE		 60 // 6.0V
+	#define MIN_SUPPLY_VOLTAGE		 60	// 6.0V
+	#define VOLTAGE_FAKTOR		   80 // *10 because of [0,1V] TMC4671-LA
+	#define VOLTAGE_OFFSET		  37100 //TMC4671-LA
+
+	#define PRESSURE_SENSOR_PIN	0
+
 #endif /* DEVICE==TMC4671_TMC6100_TOSV_REF_V10 */
 
 #endif /* TMC4671_TMC6100_TOSV_REF_V10_H */

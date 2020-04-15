@@ -32,6 +32,11 @@
 	// motion mode
 	uint8_t gMotionMode[NUMBER_OF_MOTORS];
 
+	// general information
+	void bldc_checkSupplyVoltage(uint8_t motor);
+
+	// pressure control
+	int32 bldc_getActualPressure();
 	// === implementation ===
 
 void bldc_init()
@@ -70,8 +75,11 @@ void bldc_processBLDC()
 	{
 		systemInfo_incVelocityLoopCounter();
 
+		debug_setTestVar0(bldc_getActualPressure());
+
 		for (int motor = 0; motor < NUMBER_OF_MOTORS; motor++)
 		{
+			bldc_checkSupplyVoltage(motor);
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -176,6 +184,28 @@ int16_t bldc_getSupplyVoltage()
 {
 	return gActualSupplyVoltage;
 }
+
+/* observe over-/under-voltage and disable driver if necessary */
+void bldc_checkSupplyVoltage(uint8_t motor)
+{
+	gActualSupplyVoltage = (VOLTAGE_FAKTOR*tmcm_getModuleSpecificADCValue(ADC_VOLTAGE))/4095;
+
+	if (gActualSupplyVoltage >= MAX_SUPPLY_VOLTAGE)
+	{
+		flags_setStatusFlag(motor, OVERVOLTAGE);
+	}
+	else if (gActualSupplyVoltage <= MIN_SUPPLY_VOLTAGE)
+	{
+		flags_setStatusFlag(motor, UNDERVOLTAGE);
+		flags_clearStatusFlag(motor, OVERVOLTAGE);
+	}
+	else if (gActualSupplyVoltage > ON__SUPPLY_VOLTAGE)
+	{
+		flags_clearStatusFlag(motor, OVERVOLTAGE);
+		flags_clearStatusFlag(motor, UNDERVOLTAGE);
+	}
+}
+
 
 int16_t bldc_getMotorTemperature()
 {
@@ -448,4 +478,9 @@ void bldc_checkCommutationMode(uint8_t motor)
 		}
 		gLastSetCommutationMode[motor] = motorConfig[motor].commutationMode;
 	}
+}
+
+int32_t bldc_getActualPressure() // unit: Pa
+{
+	return (tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*1000-409500)/205;
 }

@@ -14,6 +14,9 @@
 	#define DEFAULT_MC  0
 	#define DEFAULT_DRV 0
 
+	extern uint8_t ADC_VOLTAGE;
+	extern uint8_t ADC_MOT_TEMP;
+
 	#include "modules/SelectModule.h"
 
 	typedef struct

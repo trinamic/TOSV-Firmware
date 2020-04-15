@@ -29,19 +29,19 @@ void tmcm_initModuleConfig()
 
 void tmcm_initMotorConfig()
 {
-	motorConfig[0].maximumCurrent 			= 3000;
+	motorConfig[0].maximumCurrent 			= 2700;
 
-	motorConfig[0].maxPositioningSpeed 		= 4000;
-	motorConfig[0].acceleration				= 2000;
+	motorConfig[0].maxPositioningSpeed 		= 100000;
+	motorConfig[0].acceleration				= 100000;
 	motorConfig[0].useVelocityRamp			= true;
 	motorConfig[0].openLoopCurrent			= 1000;
 	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
-	motorConfig[0].motorPolePairs			= 4;
+	motorConfig[0].motorPolePairs			= 2;
 	motorConfig[0].commutationMode			= COMM_MODE_FOC_DISABLED;
 	motorConfig[0].adc_I0_offset			= 33200;
 	motorConfig[0].adc_I1_offset			= 33200;
 
-	motorConfig[0].hallPolarity 			= 1;
+	motorConfig[0].hallPolarity 			= 0;
 	motorConfig[0].hallDirection			= 0;
 	motorConfig[0].hallInterpolation		= 1;
 	motorConfig[0].hallPhiEOffset			= 0;
@@ -49,12 +49,12 @@ void tmcm_initMotorConfig()
 	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
 	motorConfig[0].shaftBit					= 0;
 
-	motorConfig[0].pidTorque_P_param		= 300;
-	motorConfig[0].pidTorque_I_param		= 300;
-	motorConfig[0].pidVelocity_P_param		= 300;
+	motorConfig[0].pidTorque_P_param		= 1000;
+	motorConfig[0].pidTorque_I_param		= 32000;
+	motorConfig[0].pidVelocity_P_param		= 200;
 	motorConfig[0].pidVelocity_I_param		= 100;
 
-	motorConfig[0].pwm_freq 				= 25000;
+	motorConfig[0].pwm_freq 				= 100000;
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);
@@ -78,7 +78,7 @@ void tmcm_updateConfig()
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_POLARITIES, 0x00000000);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_MAXCNT, 0x00000F9F);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_BBM_H_BBM_L, 0x00001919);
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_SV_CHOP, 0x00000007);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_SV_CHOP, 0x00000107);
 
 	// ADC configuration
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I_SELECT, 0x18000100);

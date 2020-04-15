@@ -19,6 +19,9 @@ const char *VersionString="0020V100";
 #define ADC1_CHANNELS		3
 static volatile uint16_t ADC1Value[ADC1_CHANNELS];	// array for analog values (filled by DMA)
 
+// ADC1
+uint8_t	ADC_VOLTAGE = 3;
+
 void tmcm_initModuleConfig()
 {
 	moduleConfig.baudrate 				= 7; // UART 115200bps
@@ -28,19 +31,19 @@ void tmcm_initModuleConfig()
 
 void tmcm_initMotorConfig()
 {
-	motorConfig[0].maximumCurrent 			= 3000;
+	motorConfig[0].maximumCurrent 			= 2700;
 
-	motorConfig[0].maxPositioningSpeed 		= 4000;
-	motorConfig[0].acceleration				= 2000;
+	motorConfig[0].maxPositioningSpeed 		= 100000;
+	motorConfig[0].acceleration				= 100000;
 	motorConfig[0].useVelocityRamp			= true;
 	motorConfig[0].openLoopCurrent			= 1000;
 	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
-	motorConfig[0].motorPolePairs			= 4;
+	motorConfig[0].motorPolePairs			= 2;
 	motorConfig[0].commutationMode			= COMM_MODE_FOC_DISABLED;
 	motorConfig[0].adc_I0_offset			= 33200;
 	motorConfig[0].adc_I1_offset			= 33200;
 
-	motorConfig[0].hallPolarity 			= 1;
+	motorConfig[0].hallPolarity 			= 0;
 	motorConfig[0].hallDirection			= 0;
 	motorConfig[0].hallInterpolation		= 1;
 	motorConfig[0].hallPhiEOffset			= 0;
@@ -48,12 +51,12 @@ void tmcm_initMotorConfig()
 	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
 	motorConfig[0].shaftBit					= 0;
 
-	motorConfig[0].pidTorque_P_param		= 300;
-	motorConfig[0].pidTorque_I_param		= 300;
-	motorConfig[0].pidVelocity_P_param		= 300;
+	motorConfig[0].pidTorque_P_param		= 1000;
+	motorConfig[0].pidTorque_I_param		= 32000;
+	motorConfig[0].pidVelocity_P_param		= 200;
 	motorConfig[0].pidVelocity_I_param		= 100;
 
-	motorConfig[0].pwm_freq 				= 25000;
+	motorConfig[0].pwm_freq 				= 100000;
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);
@@ -83,7 +86,7 @@ void tmcm_updateConfig()
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_POLARITIES, 0x00000000);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_MAXCNT, 0x00000F9F);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_BBM_H_BBM_L, 0x00001919);
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_SV_CHOP, 0x00000007);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_PWM_SV_CHOP, 0x00000107);
 
 	// ADC configuration
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_ADC_I_SELECT, 0x18000100);
@@ -130,7 +133,7 @@ void tmcm_initModuleSpecificIO()
 
 	// analog inputs port A
 	GPIO_StructInit(&GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0; // AIN2
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1; // AIN2 | NTC
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
@@ -338,6 +341,9 @@ uint16_t tmcm_getModuleSpecificADCValue(uint8_t pin)
 			break;
 		case 2:
 			return ADC1Value[2];  // ADC_AIN2
+			break;
+		case 3:
+			return (tmc4671_readFieldWithDependency(DEFAULT_MC, TMC4671_ADC_RAW_DATA, TMC4671_ADC_RAW_ADDR, 1, TMC4671_ADC_VM_RAW_MASK, TMC4671_ADC_VM_RAW_SHIFT) - VOLTAGE_OFFSET);
 			break;
 	}
 	return 0;

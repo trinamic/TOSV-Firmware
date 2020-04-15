@@ -9,6 +9,7 @@
 #define BLDC_H
 
 	#include "Definitions.h"
+	#include "hal/modules/SelectModule.h"
 
 	void bldc_init();
 	void bldc_processBLDC();
