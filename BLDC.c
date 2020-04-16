@@ -482,5 +482,5 @@ void bldc_checkCommutationMode(uint8_t motor)
 
 int32_t bldc_getActualPressure() // unit: Pa
 {
-	return (tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*1000-409500)/205;
+	return (tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*10000/232)-20000;
 }
