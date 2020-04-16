@@ -24,9 +24,10 @@
 	#include "cpu/STM32F205/usbd_desc.h"
 	#include "cpu/STM32F205/usbd_cdc_core.h"
 
-	#define MAX_VELOCITY 				(int32_t)200000
-	#define MAX_ACCELERATION			(int32_t)100000
-	#define TMCM_MAX_CURRENT 			(int32_t)5000
+	#define MAX_VELOCITY 			(int32_t)200000
+	#define MAX_ACCELERATION		(int32_t)100000
+	#define MAX_CURRENT 			(int32_t)5000
+	#define MAX_PRESSURE			(int32_t)10000
 
 	#define EEPROM_SPI1_ON_PB3_PB4_PB5
 
@@ -55,16 +56,21 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	0
+	#define SW_VERSION_LOW  	1
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x64	// 100
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x65	// 101
 
 	#define WEASEL_SPI3_ON_PC10_PC11_PC12
 	#define DRAGON_SPI3_ON_PC10_PC11_PC12
 
-	#define PRESSURE_SENSOR_PIN 2
-
 	TMC_LinearRamp rampGenerator[NUMBER_OF_MOTORS];
+
+	#define MAX_SUPPLY_VOLTAGE		3600 	// 36.0V
+	#define ON__SUPPLY_VOLTAGE		60 		// 6.0V
+	#define MIN_SUPPLY_VOLTAGE		60		// 6.0V
+	#define VOLTAGE_FAKTOR		   	0
+
+	#define PRESSURE_SENSOR_PIN 	2
 
 #endif /* DEVICE==STARTRAMPE_TOSV_V10 */
 

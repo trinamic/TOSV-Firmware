@@ -495,7 +495,7 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 			case 11: // max current
 				if (command == TMCL_SAP)
 				{
-					if((*value >= 0) && (*value <= TMCM_MAX_CURRENT))
+					if((*value >= 0) && (*value <= MAX_CURRENT))
 						bldc_updateMaxMotorCurrent(motor, *value);
 					else
 						errors = REPLY_INVALID_VALUE;
@@ -512,7 +512,7 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 			case 12: // open loop current
 				if (command == TMCL_SAP)
 				{
-					if((*value >= 0) && (*value <= TMCM_MAX_CURRENT))
+					if((*value >= 0) && (*value <= MAX_CURRENT))
 						motorConfig[motor].openLoopCurrent = *value;
 					else
 						errors = REPLY_INVALID_VALUE;
@@ -629,13 +629,13 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					if (!bldc_setMaxVelocity(motor, *value))
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
-					*value = motorConfig[motor].maxPositioningSpeed;
+					*value = motorConfig[motor].maxVelocity;
 				} else if (command == TMCL_STAP) {
-					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPositioningSpeed-(u32)&motorConfig[motor],
-							(u8 *)&motorConfig[motor].maxPositioningSpeed, sizeof(motorConfig[motor].maxPositioningSpeed));
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxVelocity-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxVelocity, sizeof(motorConfig[motor].maxVelocity));
 				} else if (command == TMCL_RSAP) {
-					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPositioningSpeed-(u32)&motorConfig[motor],
-							(u8 *)&motorConfig[motor].maxPositioningSpeed, sizeof(motorConfig[motor].maxPositioningSpeed));
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxVelocity-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxVelocity, sizeof(motorConfig[motor].maxVelocity));
 				}
 				break;
 			case 29: // enable velocity ramp
@@ -669,6 +669,29 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 			case 31: // placeholder for deceleration (ED)
+				break;
+
+			// ===== pressure mode settings =====
+
+			case 32: // target pressure
+				if (command == TMCL_SAP)
+				{
+					if(!bldc_setTargetPressure(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getTargetPressure(motor);
+				}
+				break;
+			case 33: // ramp pressure
+				if (command == TMCL_GAP) {
+					*value = bldc_getRampPressure(motor);
+				}
+				break;
+			case 34: // actual pressure
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getActualPressure(motor);
+				}
 				break;
 
 			// ===== pi controller settings =====
@@ -754,39 +777,65 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 
-			case 40: // torque Error
-				if (command == TMCL_GAP)
+			case 39: // pressure P
+				if (command == TMCL_SAP)
 				{
-					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 0, TMC4671_PID_TORQUE_ERROR_MASK, TMC4671_PID_TORQUE_ERROR_SHIFT);
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidPressure_P_param = *value;
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidPressure_P_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidPressure_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidPressure_P_param, sizeof(motorConfig[motor].pidPressure_P_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidPressure_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidPressure_P_param, sizeof(motorConfig[motor].pidPressure_P_param));
 				}
 				break;
+			case 40: // pressure I
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidPressure_I_param = *value;
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidPressure_I_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidPressure_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidPressure_I_param, sizeof(motorConfig[motor].pidPressure_I_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidPressure_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidPressure_I_param, sizeof(motorConfig[motor].pidPressure_I_param));
+				}
+				break;
+
 			case 41: // torque I-Sum
 				if (command == TMCL_GAP)
 				{
 					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 4, TMC4671_PID_TORQUE_ERROR_SUM_MASK, TMC4671_PID_TORQUE_ERROR_SUM_SHIFT);
 				}
 				break;
-			case 42: // flux Error
-				if (command == TMCL_GAP)
-				{
-					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 1, TMC4671_PID_FLUX_ERROR_MASK, TMC4671_PID_FLUX_ERROR_SHIFT);
-				}
-				break;
-			case 43: // flux I-Sum
+			case 42: // flux I-Sum
 				if (command == TMCL_GAP)
 				{
 					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 5, TMC4671_PID_FLUX_ERROR_SUM_MASK, TMC4671_PID_FLUX_ERROR_SUM_SHIFT);
 				}
 				break;
-			case 44: // velocity Error
-				if (command == TMCL_GAP)
-				{
-					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 2, TMC4671_PID_VELOCITY_ERROR_MASK, TMC4671_PID_VELOCITY_ERROR_SHIFT) / motorConfig[motor].motorPolePairs;
-				}
-				break;
-			case 45: // velocity I-Sum
+			case 43: // velocity I-Sum
 				if (command == TMCL_GAP) {
 					*value = tmc4671_readFieldWithDependency(motor, TMC4671_PID_ERROR_DATA, TMC4671_PID_ERROR_ADDR, 6, TMC4671_PID_VELOCITY_ERROR_SUM_MASK, TMC4671_PID_VELOCITY_ERROR_SUM_SHIFT) / motorConfig[motor].motorPolePairs;
+				}
+				break;
+			case 44: // pressure I-Sum
+				if (command == TMCL_GAP) {
+					*value = bldc_getPressureErrorSum(motor);
 				}
 				break;
 

@@ -35,13 +35,16 @@
 
 		uint32_t openLoopCurrent;
 		uint32_t pwm_freq;
-		int32_t maxPositioningSpeed;
-		int32_t acceleration;
+		int32_t  maxVelocity;
+		int32_t  acceleration;
 
 		uint16_t pidTorque_P_param;
 		uint16_t pidTorque_I_param;
 		uint16_t pidVelocity_P_param;
 		uint16_t pidVelocity_I_param;
+
+		uint16_t pidPressure_P_param;
+		uint16_t pidPressure_I_param;
 
 		uint8_t motorType;
 		uint8_t motorPolePairs;
@@ -58,6 +61,15 @@
 
 	TModuleConfig moduleConfig;
 	TMotorConfig motorConfig[NUMBER_OF_MOTORS];
+
+	typedef struct
+	{
+		int32_t error;            // regulation error
+		int64_t errorSum;         // sum of the I-part integration
+		int32_t pParam;           // P parameter
+		int32_t iParam;           // I parameter
+		int32_t result;			  // result of the PI regulator
+	} PIControl;
 
 	// commutation modes
 	#define COMM_MODE_FOC_DISABLED			0

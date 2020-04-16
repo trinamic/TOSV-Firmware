@@ -11,7 +11,7 @@
 #if DEVICE==STARTRAMPE_TOSV_V10
 
 // general module settings
-const char *VersionString="0020V100";
+const char *VersionString="0020V101";
 uint32_t PLL_M = 8;
 uint32_t PLL_N = 120;
 
@@ -19,6 +19,9 @@ uint32_t PLL_N = 120;
 #define ADC1_DR_ADDRESS    	((uint32_t)0x4001204C)
 #define ADC1_CHANNELS		3
 static volatile uint16_t ADC1Value[ADC1_CHANNELS];	// array for analog values (filled by DMA)
+
+// ADC1
+uint8_t	ADC_VOLTAGE = 0;	// unused
 
 void tmcm_initModuleConfig()
 {
@@ -30,9 +33,8 @@ void tmcm_initModuleConfig()
 void tmcm_initMotorConfig()
 {
 	motorConfig[0].maximumCurrent 			= 2700;
-
-	motorConfig[0].maxPositioningSpeed 		= 100000;
-	motorConfig[0].acceleration				= 100000;
+	motorConfig[0].maxVelocity		 		= 80000;
+	motorConfig[0].acceleration				= 20000;
 	motorConfig[0].useVelocityRamp			= true;
 	motorConfig[0].openLoopCurrent			= 1000;
 	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
@@ -49,10 +51,13 @@ void tmcm_initMotorConfig()
 	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
 	motorConfig[0].shaftBit					= 0;
 
-	motorConfig[0].pidTorque_P_param		= 1000;
-	motorConfig[0].pidTorque_I_param		= 32000;
+	motorConfig[0].pidTorque_P_param		= 1500;
+	motorConfig[0].pidTorque_I_param		= 100;
 	motorConfig[0].pidVelocity_P_param		= 200;
 	motorConfig[0].pidVelocity_I_param		= 100;
+
+	motorConfig[0].pidPressure_P_param		= 3000;
+	motorConfig[0].pidPressure_I_param		= 3000;
 
 	motorConfig[0].pwm_freq 				= 100000;
 
@@ -63,7 +68,7 @@ void tmcm_initMotorConfig()
 void tmcm_updateConfig()
 {
 	// === configure linear ramp generator
-	rampGenerator[0].maxVelocity  = motorConfig[0].maxPositioningSpeed;
+	rampGenerator[0].maxVelocity  = motorConfig[0].maxVelocity;
 	rampGenerator[0].acceleration = motorConfig[0].acceleration;
 	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
 
@@ -97,7 +102,7 @@ void tmcm_updateConfig()
 	tmc4671_setVelocityPI(DEFAULT_MC, motorConfig[0].pidVelocity_P_param, motorConfig[0].pidVelocity_I_param);
 
 	// limit configuration
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig[0].maxPositioningSpeed * motorConfig[0].motorPolePairs);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig[0].maxVelocity * motorConfig[0].motorPolePairs);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_OPENLOOP_ACCELERATION, motorConfig[0].acceleration);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PIDOUT_UQ_UD_LIMITS, 0x7FFF);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_TORQUE_FLUX_TARGET_DDT_LIMITS, 0x7FFF);

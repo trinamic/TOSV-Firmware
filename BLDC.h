@@ -53,8 +53,15 @@
 	bool bldc_setAcceleration(uint8_t motor, int32_t acceleration);
 	bool bldc_setRampEnabled(uint8_t motor, int32_t enableRamp);
 
+	// ===== pressure control mode settings =====
+	int32 bldc_getTargetPressure(uint8_t motor);
+	int32 bldc_getRampPressure(uint8_t motor);
+	bool bldc_setTargetPressure(uint8_t motor, int32_t pressure);
+	int32 bldc_getActualPressure(uint8_t motor);
+	int32_t bldc_getPressureErrorSum(uint8_t motor);
+
 	// ===== pi controller mode settings =====
-	void bldc_switchToRegulationMode(uint8_t motor, uint8_t mode);
+	void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode);
 
 	// ===== general motor control mode handling =====
 	void bldc_checkCommutationMode(uint8_t motor);

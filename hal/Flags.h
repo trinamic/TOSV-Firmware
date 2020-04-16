@@ -23,7 +23,7 @@
 
 	#define STOP_MODE			 	0x00000100	// 8
 	#define VELOCITY_MODE			0x00000200	// 9
-	#define POSITION_MODE           0x00000400	// 10
+	#define PRESSURE_MODE           0x00000400	// 10
 	#define TORQUE_MODE				0x00000800	// 11
 
 	#define EMERGENCYSTOP           0x00001000	// 12
