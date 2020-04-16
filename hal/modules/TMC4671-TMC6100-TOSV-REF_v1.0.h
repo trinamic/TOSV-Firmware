@@ -21,7 +21,8 @@
 
 	#define MAX_VELOCITY 				(int32_t)200000
 	#define MAX_ACCELERATION			(int32_t)100000
-	#define TMCM_MAX_CURRENT 			(int32_t)5000
+	#define MAX_CURRENT 				(int32_t)5000
+	#define MAX_PRESSURE				(int32_t)10000
 
 	// ===== UART configuration =====
 	#define USE_UART_INTERFACE
@@ -41,9 +42,9 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	0
+	#define SW_VERSION_LOW  	1
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x64	// 100
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x65	// 101
 
 	#define WEASEL_SPI2_ON_PB13_PB14_PB15
 	#define DRAGON_SPI2_ON_PB13_PB14_PB15
@@ -51,13 +52,16 @@
 
 	TMC_LinearRamp rampGenerator[NUMBER_OF_MOTORS];
 
-	#define MAX_SUPPLY_VOLTAGE		3600 // 36.0V
-	#define ON__SUPPLY_VOLTAGE		 60 // 6.0V
-	#define MIN_SUPPLY_VOLTAGE		 60	// 6.0V
-	#define VOLTAGE_FAKTOR		   80 // *10 because of [0,1V] TMC4671-LA
-	#define VOLTAGE_OFFSET		  37100 //TMC4671-LA
+	#define MIN_CRITICAL_TEMP     	100 //100°C
+	#define MAX_CRITICAL_TEMP     	120	//120°C
 
-	#define PRESSURE_SENSOR_PIN	0
+	#define MAX_SUPPLY_VOLTAGE		3600 	// 36.0V
+	#define ON__SUPPLY_VOLTAGE		60 		// 6.0V
+	#define MIN_SUPPLY_VOLTAGE		60		// 6.0V
+	#define VOLTAGE_FAKTOR		   	79.2	// *10 because of [0,1V] TMC4671-LA
+	#define VOLTAGE_OFFSET		  	37100 	//TMC4671-LA
+
+	#define PRESSURE_SENSOR_PIN		0
 
 #endif /* DEVICE==TMC4671_TMC6100_TOSV_REF_V10 */
 

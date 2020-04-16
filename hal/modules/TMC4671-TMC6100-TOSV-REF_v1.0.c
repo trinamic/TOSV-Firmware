@@ -12,15 +12,16 @@
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
 // general module settings
-const char *VersionString="0020V100";
+const char *VersionString="0020V101";
 
 // ADC configuration
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001244C)
-#define ADC1_CHANNELS		3
+#define ADC1_CHANNELS		4
 static volatile uint16_t ADC1Value[ADC1_CHANNELS];	// array for analog values (filled by DMA)
 
 // ADC1
 uint8_t	ADC_VOLTAGE = 3;
+uint8_t ADC_MOT_TEMP = 4;
 
 void tmcm_initModuleConfig()
 {
@@ -32,9 +33,8 @@ void tmcm_initModuleConfig()
 void tmcm_initMotorConfig()
 {
 	motorConfig[0].maximumCurrent 			= 2700;
-
-	motorConfig[0].maxPositioningSpeed 		= 100000;
-	motorConfig[0].acceleration				= 100000;
+	motorConfig[0].maxVelocity 				= 80000;
+	motorConfig[0].acceleration				= 20000;
 	motorConfig[0].useVelocityRamp			= true;
 	motorConfig[0].openLoopCurrent			= 1000;
 	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
@@ -51,10 +51,13 @@ void tmcm_initMotorConfig()
 	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
 	motorConfig[0].shaftBit					= 0;
 
-	motorConfig[0].pidTorque_P_param		= 1000;
-	motorConfig[0].pidTorque_I_param		= 32000;
+	motorConfig[0].pidTorque_P_param		= 1500;
+	motorConfig[0].pidTorque_I_param		= 100;
 	motorConfig[0].pidVelocity_P_param		= 200;
 	motorConfig[0].pidVelocity_I_param		= 100;
+
+	motorConfig[0].pidPressure_P_param		= 3000;
+	motorConfig[0].pidPressure_I_param		= 3000;
 
 	motorConfig[0].pwm_freq 				= 100000;
 
@@ -68,7 +71,7 @@ void tmcm_updateConfig()
 	while(abs(systick_getTimer()-delay) < 100){;}
 
 	// === configure linear ramp generator
-	rampGenerator[0].maxVelocity  = motorConfig[0].maxPositioningSpeed;
+	rampGenerator[0].maxVelocity  = motorConfig[0].maxVelocity;
 	rampGenerator[0].acceleration = motorConfig[0].acceleration;
 	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
 
@@ -105,7 +108,7 @@ void tmcm_updateConfig()
 	tmc4671_setVelocityPI(DEFAULT_MC, motorConfig[0].pidVelocity_P_param, motorConfig[0].pidVelocity_I_param);
 
 	// limit configuration
-	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig[0].maxPositioningSpeed * motorConfig[0].motorPolePairs);
+	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_VELOCITY_LIMIT, motorConfig[0].maxVelocity * motorConfig[0].motorPolePairs);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_OPENLOOP_ACCELERATION, motorConfig[0].acceleration);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PIDOUT_UQ_UD_LIMITS, 0x7FFF);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_TORQUE_FLUX_TARGET_DDT_LIMITS, 0x7FFF);
@@ -214,6 +217,7 @@ void tmcm_initModuleSpecificADC()
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 1, ADC_SampleTime_28Cycles5);// use ADC_AIN0
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 2, ADC_SampleTime_28Cycles5);// use ADC_AIN1
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 3, ADC_SampleTime_28Cycles5);// use ADC_AIN2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 4, ADC_SampleTime_28Cycles5);// use ADC_MOT_TEMP
 
 	ADC_ITConfig(ADC1, ADC_IT_EOC|ADC_IT_AWD|ADC_IT_JEOC, DISABLE);
 
@@ -342,9 +346,11 @@ uint16_t tmcm_getModuleSpecificADCValue(uint8_t pin)
 		case 2:
 			return ADC1Value[2];  // ADC_AIN2
 			break;
-		case 3:
+		case 3:					  // ADC_VOLTAGE
 			return (tmc4671_readFieldWithDependency(DEFAULT_MC, TMC4671_ADC_RAW_DATA, TMC4671_ADC_RAW_ADDR, 1, TMC4671_ADC_VM_RAW_MASK, TMC4671_ADC_VM_RAW_SHIFT) - VOLTAGE_OFFSET);
 			break;
+		case 4:
+			return ADC1Value[3]; // ADC_MOT_TEMP
 	}
 	return 0;
 }
