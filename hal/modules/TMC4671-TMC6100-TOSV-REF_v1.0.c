@@ -49,7 +49,7 @@ void tmcm_initMotorConfig()
 	motorConfig[0].hallPhiEOffset			= 0;
 
 	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
-	motorConfig[0].shaftBit					= 0;
+	motorConfig[0].shaftBit					= 1;
 
 	motorConfig[0].pidTorque_P_param		= 1500;
 	motorConfig[0].pidTorque_I_param		= 100;
@@ -63,6 +63,9 @@ void tmcm_initMotorConfig()
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);
+
+	// tosv control
+	tosv_init(&tosvConfig[0]);
 }
 
 void tmcm_updateConfig()
@@ -74,6 +77,16 @@ void tmcm_updateConfig()
 	rampGenerator[0].maxVelocity  = motorConfig[0].maxVelocity;
 	rampGenerator[0].acceleration = motorConfig[0].acceleration;
 	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
+
+	// use motor config to update tosv values with EEPROM stored values
+// todo: (like tosvConfig[0]->timeStartup = motorConfig[0].tosvTimeStartup;)
+//	config->timeStartup = 2000;
+//	config->timeState1 = 500;
+//	config->timeState2 = 1000;
+//	config->timeState3 = 500;
+//	config->timeState4 = 1000;
+//	config->maxPressure = 2000;
+//	config->peepPressure = 1200;
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control

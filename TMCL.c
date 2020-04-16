@@ -949,83 +949,177 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 //			case 63: // brake chopper active
 //				break;
 
+			// ===== tosv settings =====
+			case 100: // enable tosv
+				if (command == TMCL_SAP)
+				{
+					tosv_enableVentilator(&tosvConfig[motor], *value);
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosv_isVentilatorEnabled(&tosvConfig[motor]);
+				}
+				break;
+			case 101: // actual state
+				if(command==TMCL_GAP)
+				{
+					*value = tosvConfig[motor].actualState;
+				}
+				break;
+			case 102: // timer
+				if(command==TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timer;
+				}
+				break;
+			case 103: // timeStartup
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].timeStartup = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timeStartup;
+				}
+				break;
+			case 104: // timeState1
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].timeState1 = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timeState1;
+				}
+				break;
+			case 105: // timeState2
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].timeState2 = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timeState2;
+				}
+				break;
+			case 106: // timeState3
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].timeState3 = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timeState3;
+				}
+				break;
+			case 107: // timeState4
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].timeState4 = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].timeState4;
+				}
+				break;
+			case 108: // maxPressure
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].maxPressure = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].maxPressure;
+				}
+				break;
+			case 109: // peepPressure
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].peepPressure = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].peepPressure;
+				}
+				break;
+
       // ===== TEST_OK: TOSV (to be removed again later) =====
-  		case 200:
-  			if(command==TMCL_SAP)
-  			{
-  			  if(!TOSV_setPEEP(*value)) errors=REPLY_INVALID_VALUE;
-  			}
-  			else if(command==TMCL_GAP)
-  			{
-          *value=TOSV_getPEEP();
-        }
-  			break;
-  			
-  		case 201:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setLimit(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{
-  				*value=TOSV_getLimit();
-  			}
-  			break;
-  			
-  		case 202:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setRiseTime(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{	
-  				*value=TOSV_getRiseTime();
-  			}
-  			break;
-  			
-  		case 203:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setFallTime(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{
-  				*value=TOSV_getFallTime();
-  			}
-  			break;
-  			
-  		case 204:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setFrequency(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{
-  				*value=TOSV_getFrequency();
-  			}
-  			break;
-  			
-  		case 205:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setItoE(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{
-  				*value=TOSV_getItoE();
-  			}
-  			break;
-  			
-  		case 206:
-  			if(command==TMCL_SAP)
-  			{
-    			if(!TOSV_setVolume(*value)) errors=REPLY_INVALID_VALUE;
-    		}
-  			else if(command==TMCL_GAP)
-  			{
-  				*value=TOSV_getVolume();
-  			}
-  			break;
+//  		case 200:
+//  			if(command==TMCL_SAP)
+//  			{
+//  			  if(!TOSV_setPEEP(*value)) errors=REPLY_INVALID_VALUE;
+//  			}
+//  			else if(command==TMCL_GAP)
+//  			{
+//          *value=TOSV_getPEEP();
+//        }
+//  			break;
+//
+//  		case 201:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setLimit(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getLimit();
+//  			}
+//  			break;
+//
+//  		case 202:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setRiseTime(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getRiseTime();
+//  			}
+//  			break;
+//
+//  		case 203:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setFallTime(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getFallTime();
+//  			}
+//  			break;
+//
+//  		case 204:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setFrequency(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getFrequency();
+//  			}
+//  			break;
+//
+//  		case 205:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setItoE(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getItoE();
+//  			}
+//  			break;
+//
+//  		case 206:
+//  			if(command==TMCL_SAP)
+//  			{
+//    			if(!TOSV_setVolume(*value)) errors=REPLY_INVALID_VALUE;
+//    		}
+//  			else if(command==TMCL_GAP)
+//  			{
+//  				*value=TOSV_getVolume();
+//  			}
+//  			break;
   			
        
 			// ===== debugging =====
@@ -1205,33 +1299,33 @@ void tmcl_setVentilatorParameter(void)
 	{
   	switch(ActualCommand.Type)
   	{
-  		case 0:
-  			if(!TOSV_setPEEP(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 1:
-  			if(!TOSV_setLimit(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 2:
-  			if(!TOSV_setRiseTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 3:
-  			if(!TOSV_setFallTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 4:
-  			if(!TOSV_setFrequency(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 5:
-  			if(!TOSV_setItoE(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
-  			
-  		case 6:
-  			if(!TOSV_setVolume(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
-  			break;
+//  		case 0:
+//  			if(!TOSV_setPEEP(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 1:
+//  			if(!TOSV_setLimit(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 2:
+//  			if(!TOSV_setRiseTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 3:
+//  			if(!TOSV_setFallTime(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 4:
+//  			if(!TOSV_setFrequency(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 5:
+//  			if(!TOSV_setItoE(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
+//
+//  		case 6:
+//  			if(!TOSV_setVolume(ActualCommand.Value.Int32)) ActualReply.Status=REPLY_INVALID_VALUE;
+//  			break;
   			
   		default:
   			ActualReply.Status=REPLY_WRONG_TYPE;
@@ -1247,33 +1341,33 @@ void tmcl_getVentilatorParameter(void)
 	{
   	switch(ActualCommand.Type)
   	{
-  		case 0:
-  			ActualReply.Value.Int32=TOSV_getPEEP();
-  			break;
-  			
-  		case 1:
-  			ActualReply.Value.Int32=TOSV_getLimit();
-  			break;
-  			
-  		case 2:
-  			ActualReply.Value.Int32=TOSV_getRiseTime();
-  			break;
-  			
-  		case 3:
-  			ActualReply.Value.Int32=TOSV_getFallTime();
-  			break;
-  			
-  		case 4:
-  			ActualReply.Value.Int32=TOSV_getFrequency();
-  			break;
-  			
-  		case 5:
-  			ActualReply.Value.Int32=TOSV_getItoE();
-  			break;
-  			
-  		case 6:
-  			ActualReply.Value.Int32=TOSV_getVolume();
-  			break;
+//  		case 0:
+//  			ActualReply.Value.Int32=TOSV_getPEEP();
+//  			break;
+//
+//  		case 1:
+//  			ActualReply.Value.Int32=TOSV_getLimit();
+//  			break;
+//
+//  		case 2:
+//  			ActualReply.Value.Int32=TOSV_getRiseTime();
+//  			break;
+//
+//  		case 3:
+//  			ActualReply.Value.Int32=TOSV_getFallTime();
+//  			break;
+//
+//  		case 4:
+//  			ActualReply.Value.Int32=TOSV_getFrequency();
+//  			break;
+//
+//  		case 5:
+//  			ActualReply.Value.Int32=TOSV_getItoE();
+//  			break;
+//
+//  		case 6:
+//  			ActualReply.Value.Int32=TOSV_getVolume();
+//  			break;
   			
   		default:
   			ActualReply.Status=REPLY_WRONG_TYPE;
@@ -1289,7 +1383,7 @@ void tmcl_startVentilator(void)
 	{
 		if(ActualCommand.Motor==0 && ActualCommand.Value.Int32==0x1234)
 		{
-			if(!TOSV_startVentilator()) ActualReply.Status=REPLY_CMD_NOT_AVAILABLE;
+//			if(!TOSV_startVentilator()) ActualReply.Status=REPLY_CMD_NOT_AVAILABLE;
 		}
 		else ActualReply.Status=REPLY_INVALID_VALUE;
 	}
@@ -1302,7 +1396,7 @@ void tmcl_stopVentilator(void)
 	{
 		if(ActualCommand.Motor==0 && ActualCommand.Value.Int32==0x4321)
 		{
-			TOSV_stopVentilator();
+//			TOSV_stopVentilator();
 		}
 		else ActualReply.Status=REPLY_INVALID_VALUE;
 	}

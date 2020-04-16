@@ -45,6 +45,7 @@
 	#include "../../Definitions.h"
 	#include "../HAL_Definitions.h"
 	#include "../Flags.h"
+	#include "../../TOSV.h"
 
 	#include "TMC-API/tmc/ic/TMC4671/TMC4671.h"
 	#include "TMC-API/tmc/ic/TMC4671/TMC4671_Variants.h"
@@ -64,6 +65,10 @@
 	#define DRAGON_SPI3_ON_PC10_PC11_PC12
 
 	TMC_LinearRamp rampGenerator[NUMBER_OF_MOTORS];
+	TOSV_Config tosvConfig[NUMBER_OF_MOTORS];
+
+	#define MIN_CRITICAL_TEMP     	100 //100°C
+	#define MAX_CRITICAL_TEMP     	120	//120°C
 
 	#define MAX_SUPPLY_VOLTAGE		3600 	// 36.0V
 	#define ON__SUPPLY_VOLTAGE		60 		// 6.0V
