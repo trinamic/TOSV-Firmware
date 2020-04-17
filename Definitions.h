@@ -38,6 +38,8 @@
 		int32_t  maxVelocity;
 		int32_t  acceleration;
 
+		int32_t  maxPressure;
+
 		uint16_t pidTorque_P_param;
 		uint16_t pidTorque_I_param;
 		uint16_t pidVelocity_P_param;
@@ -57,6 +59,8 @@
 		uint8_t hallInterpolation;
 
 		int16_t hallPhiEOffset;
+
+
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;

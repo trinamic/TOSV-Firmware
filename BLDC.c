@@ -171,7 +171,7 @@ void bldc_processBLDC()
 				gTargetPressure[motor] = gDesiredPressure[motor];
 
 				// pressure pi regulation
-				gTargetTorque[motor] = bldc_getTargetTorqueFromPressurePIRegulator(gTargetPressure[motor], gActualPressure[motor], &pressurePID, MAX_PRESSURE, motorConfig[motor].maximumCurrent); // todo: adjustable MaxPressure parameter needed (ED)
+				gTargetTorque[motor] = bldc_getTargetTorqueFromPressurePIRegulator(gTargetPressure[motor], gActualPressure[motor], &pressurePID, motorConfig[motor].maxPressure, motorConfig[motor].maximumCurrent); // todo: adjustable MaxPressure parameter needed (ED)
 
 				// update ramp generator for velocity control to keep actual velocity as ramp velocity
 				rampGenerator[motor].targetVelocity = gActualVelocity[motor];
@@ -605,7 +605,7 @@ bool bldc_setTargetPressure(uint8_t motor, int32_t targetPressure)
 	  ||(motorConfig[motor].commutationMode == COMM_MODE_FOC_OPEN_LOOP))
 		return false;
 
-	if((targetPressure >= 0) && (targetPressure <= MAX_PRESSURE))
+	if((targetPressure >= 0) && (targetPressure <= motorConfig[motor].maxPressure))
 	{
 		gDesiredPressure[motor] = targetPressure;
 

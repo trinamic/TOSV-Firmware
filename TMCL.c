@@ -602,7 +602,7 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 
 			// ===== velocity mode settings =====
 
-			case 25: // target velocity
+			case 24: // target velocity
 				if (command == TMCL_SAP)
 				{
 					if(!bldc_setTargetVelocity(motor, *value))
@@ -611,19 +611,19 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					*value = bldc_getTargetVelocity(motor);
 				}
 				break;
-			case 26: // ramp velocity
+			case 25: // ramp velocity
 				if (command == TMCL_GAP)
 				{
 					*value = bldc_getRampGeneratorVelocity(motor);
 				}
 				break;
-			case 27: // actual velocity
+			case 26: // actual velocity
 				if (command == TMCL_GAP)
 				{
 					*value = bldc_getActualVelocity(motor);
 				}
 				break;
-			case 28: // max velocity
+			case 27: // max velocity
 				if (command == TMCL_SAP)
 				{
 					if (!bldc_setMaxVelocity(motor, *value))
@@ -638,7 +638,7 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 							(u8 *)&motorConfig[motor].maxVelocity, sizeof(motorConfig[motor].maxVelocity));
 				}
 				break;
-			case 29: // enable velocity ramp
+			case 28: // enable velocity ramp
 				if (command == TMCL_SAP)
 				{
 					if (!bldc_setRampEnabled(motor, *value))
@@ -653,7 +653,7 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						(u8 *)&motorConfig[motor].useVelocityRamp, sizeof(motorConfig[motor].useVelocityRamp));
 				}
 				break;
-			case 30: // acceleration
+			case 29: // acceleration
 				if (command == TMCL_SAP)
 				{
 					if (!bldc_setAcceleration(motor, *value))
@@ -668,12 +668,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						(u8 *)&motorConfig[motor].acceleration, sizeof(motorConfig[motor].acceleration));
 				}
 				break;
-			case 31: // placeholder for deceleration (ED)
+			case 30: // placeholder for deceleration (ED)
 				break;
 
 			// ===== pressure mode settings =====
 
-			case 32: // target pressure
+			case 31: // target pressure
 				if (command == TMCL_SAP)
 				{
 					if(!bldc_setTargetPressure(motor, *value))
@@ -682,15 +682,29 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					*value = bldc_getTargetPressure(motor);
 				}
 				break;
-			case 33: // ramp pressure
+			case 32: // ramp pressure
 				if (command == TMCL_GAP) {
 					*value = bldc_getRampPressure(motor);
 				}
 				break;
-			case 34: // actual pressure
+			case 33: // actual pressure
 				if (command == TMCL_GAP)
 				{
 					*value = bldc_getActualPressure(motor);
+				}
+				break;
+			case 34: // max pressure
+				if (command == TMCL_SAP)
+				{
+					motorConfig[motor].maxPressure = *value;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].maxPressure;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPressure-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxPressure, sizeof(motorConfig[motor].maxPressure));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maxPressure-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].maxPressure, sizeof(motorConfig[motor].maxPressure));
 				}
 				break;
 

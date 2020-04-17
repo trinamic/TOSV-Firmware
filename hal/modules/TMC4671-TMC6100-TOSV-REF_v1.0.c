@@ -35,6 +35,7 @@ void tmcm_initMotorConfig()
 	motorConfig[0].maximumCurrent 			= 3000;
 	motorConfig[0].maxVelocity 				= 80000;
 	motorConfig[0].acceleration				= 20000;
+	motorConfig[0].maxPressure				= 50000;
 	motorConfig[0].useVelocityRamp			= true;
 	motorConfig[0].openLoopCurrent			= 1000;
 	motorConfig[0].motorType				= TMC4671_THREE_PHASE_BLDC;
@@ -61,6 +62,8 @@ void tmcm_initMotorConfig()
 	motorConfig[0].pidPressure_I_param		= 3000;
 
 	motorConfig[0].pwm_freq 				= 100000;
+
+
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);

@@ -23,7 +23,7 @@
 	#define MAX_ACCELERATION			(int32_t)100000
 
 	#define MAX_CURRENT 				(int32_t)6000		// RMS current
-	#define MAX_PRESSURE				(int32_t)50000
+	#define MAX_PRESSURE				(int32_t)70000
 
 	#define USE_PRESSURE_SENSOR_1	// setup ED
 
