@@ -22,7 +22,7 @@
 	#define MAX_VELOCITY 				(int32_t)200000
 	#define MAX_ACCELERATION			(int32_t)100000
 	#define MAX_CURRENT 				(int32_t)5000
-	#define MAX_PRESSURE				(int32_t)10000
+	#define MAX_PRESSURE				(int32_t)50000
 
 	#define USE_PRESSURE_SENSOR_1	// setup ED
 
