@@ -12,23 +12,18 @@
 
 	typedef struct
 	{
-		uint8_t actualState;
+		uint8_t  actualState;
 		uint32_t timer;
 
-		uint32_t timeStartup;
-		uint32_t timeState1;
-		uint32_t timeState2;
-		uint32_t timeState3;
-		uint32_t timeState4;
+		uint32_t tStartup;
+		uint32_t tInhalationRise;
+		uint32_t tInhalationPause;
+		uint32_t tExhalationFall;
+		uint32_t tExhalationPause;
 
-		uint32_t maxPressure;
-		uint32_t peepPressure;
+		uint32_t pLIMIT;
+		uint32_t pPEEP;
 
-
-//		uint32_t PEEP;
-//		uint32_t Limit;
-//		uint32_t RiseTime;
-//		uint32_t FallTime;
 //		uint32_t Frequency;
 //		uint32_t ItoE;
 //		uint32_t Volume;

@@ -972,74 +972,74 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					*value = tosvConfig[motor].timer;
 				}
 				break;
-			case 103: // timeStartup
+			case 103: // startup time
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].timeStartup = *value;
+					tosvConfig[motor].tStartup = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].timeStartup;
+					*value = tosvConfig[motor].tStartup;
 				}
 				break;
-			case 104: // timeState1
+			case 104: // inhalation rise time
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].timeState1 = *value;
+					tosvConfig[motor].tInhalationRise = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].timeState1;
+					*value = tosvConfig[motor].tInhalationRise;
 				}
 				break;
-			case 105: // timeState2
+			case 105: // inhalation pause time
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].timeState2 = *value;
+					tosvConfig[motor].tInhalationPause = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].timeState2;
+					*value = tosvConfig[motor].tInhalationPause;
 				}
 				break;
-			case 106: // timeState3
+			case 106: // exhalation fall time
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].timeState3 = *value;
+					tosvConfig[motor].tExhalationFall = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].timeState3;
+					*value = tosvConfig[motor].tExhalationFall;
 				}
 				break;
-			case 107: // timeState4
+			case 107: // exhalation pause time
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].timeState4 = *value;
+					tosvConfig[motor].tExhalationPause = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].timeState4;
+					*value = tosvConfig[motor].tExhalationPause;
 				}
 				break;
-			case 108: // maxPressure
+			case 108: // LIMIT pressure
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].maxPressure = *value;
+					tosvConfig[motor].pLIMIT = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].maxPressure;
+					*value = tosvConfig[motor].pLIMIT;
 				}
 				break;
-			case 109: // peepPressure
+			case 109: // PEEP pressure
 				if (command == TMCL_SAP)
 				{
-					tosvConfig[motor].peepPressure = *value;
+					tosvConfig[motor].pPEEP = *value;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].peepPressure;
+					*value = tosvConfig[motor].pPEEP;
 				}
 				break;
 
