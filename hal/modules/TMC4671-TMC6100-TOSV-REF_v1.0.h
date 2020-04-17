@@ -21,7 +21,8 @@
 
 	#define MAX_VELOCITY 				(int32_t)200000
 	#define MAX_ACCELERATION			(int32_t)100000
-	#define MAX_CURRENT 				(int32_t)5000
+
+	#define MAX_CURRENT 				(int32_t)6000		// RMS current
 	#define MAX_PRESSURE				(int32_t)50000
 
 	#define USE_PRESSURE_SENSOR_1	// setup ED
@@ -45,9 +46,9 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	1
+	#define SW_VERSION_LOW  	2
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x65	// 101
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x66	// 102
 
 	#define WEASEL_SPI2_ON_PB13_PB14_PB15
 	#define DRAGON_SPI2_ON_PB13_PB14_PB15
