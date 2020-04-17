@@ -161,6 +161,8 @@ void bldc_processBLDC()
 			// always read actual pressure
 #ifdef USE_PRESSURE_SENSOR_1
 			int32_t pressure = ((int32_t)tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*100000)/2068-20000; // todo: adjustable offset parameter needed (ED)
+#else
+			int32_t pressure = ((int32_t)tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*1000-409500)/5/*205*/; 	 // todo: adjustable offset parameter needed (ED)
 #endif
 			gActualPressure[motor] = (pressure > 0) ? pressure : 0;
 

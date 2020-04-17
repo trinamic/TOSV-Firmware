@@ -54,39 +54,39 @@ void tosv_process(TOSV_Config *config)
 			bldc_setTargetPressure(0, 0 + (config->pPEEP*config->timer)/config->tStartup);
 			if (config->timer >= config->tStartup)
 			{
-				config->actualState = TOSV_STATE_1;
+				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
 			}
 			break;
-		case TOSV_STATE_1:
+		case TOSV_STATE_INHALATION_RISE:
 			bldc_setTargetPressure(0, config->pPEEP + ((config->pLIMIT-config->pPEEP)*config->timer)/config->tInhalationRise);
 			if (config->timer >= config->tInhalationRise)
 			{
-				config->actualState = TOSV_STATE_2;
+				config->actualState = TOSV_STATE_INHALATION_PAUSE;
 				config->timer = 0;
 			}
 			break;
-		case TOSV_STATE_2:
+		case TOSV_STATE_INHALATION_PAUSE:
 			bldc_setTargetPressure(0, config->pLIMIT);
 			if (config->timer >= config->tInhalationPause)
 			{
-				config->actualState = TOSV_STATE_3;
+				config->actualState = TOSV_STATE_EXHALATION_FALL;
 				config->timer = 0;
 			}
 			break;
-		case TOSV_STATE_3:
+		case TOSV_STATE_EXHALATION_FALL:
 			bldc_setTargetPressure(0, config->pPEEP + ((config->pLIMIT-config->pPEEP)*(config->tExhalationFall-config->timer))/config->tExhalationFall);
 			if (config->timer >= config->tExhalationFall)
 			{
-				config->actualState = TOSV_STATE_4;
+				config->actualState = TOSV_STATE_EXHALATION_PAUSE;
 				config->timer = 0;
 			}
 			break;
-		case TOSV_STATE_4:
+		case TOSV_STATE_EXHALATION_PAUSE:
 			bldc_setTargetPressure(0, config->pPEEP);
 			if (config->timer >= config->tExhalationPause)
 			{
-				config->actualState = TOSV_STATE_1;
+				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
 			}
 			break;

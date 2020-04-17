@@ -25,7 +25,8 @@
 	#define MAX_CURRENT 				(int32_t)6000		// RMS current
 	#define MAX_PRESSURE				(int32_t)70000
 
-	#define USE_PRESSURE_SENSOR_1	// setup ED
+	//#define USE_PRESSURE_SENSOR_1	// standard setup
+	#define USE_PRESSURE_SENSOR_2	// setup ED
 
 	// ===== UART configuration =====
 	#define USE_UART_INTERFACE

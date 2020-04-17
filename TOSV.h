@@ -14,28 +14,21 @@
 	{
 		uint8_t  actualState;
 		uint32_t timer;
-
 		uint32_t tStartup;
 		uint32_t tInhalationRise;
 		uint32_t tInhalationPause;
 		uint32_t tExhalationFall;
 		uint32_t tExhalationPause;
-
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
-
-//		uint32_t Frequency;
-//		uint32_t ItoE;
-//		uint32_t Volume;
 	} TOSV_Config;
 
-	#define TOSV_STATE_STOPPED	0
-	#define TOSV_STATE_STARTUP	1
-
-	#define TOSV_STATE_1	    2
-	#define TOSV_STATE_2	    3
-	#define TOSV_STATE_3	    4
-	#define TOSV_STATE_4	    5
+	#define TOSV_STATE_STOPPED				0
+	#define TOSV_STATE_STARTUP				1
+	#define TOSV_STATE_INHALATION_RISE	    2
+	#define TOSV_STATE_INHALATION_PAUSE	    3
+	#define TOSV_STATE_EXHALATION_FALL	    4
+	#define TOSV_STATE_EXHALATION_PAUSE	    5
 
 	void tosv_init(TOSV_Config *config);
 	void tosv_process(TOSV_Config *config);
