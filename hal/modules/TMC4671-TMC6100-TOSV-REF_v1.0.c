@@ -12,7 +12,7 @@
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
 // general module settings
-const char *VersionString="0020V101";
+const char *VersionString="0020V102";
 
 // ADC configuration
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001244C)
@@ -32,7 +32,7 @@ void tmcm_initModuleConfig()
 
 void tmcm_initMotorConfig()
 {
-	motorConfig[0].maximumCurrent 			= 2700;
+	motorConfig[0].maximumCurrent 			= 3000;
 	motorConfig[0].maxVelocity 				= 80000;
 	motorConfig[0].acceleration				= 20000;
 	motorConfig[0].useVelocityRamp			= true;
@@ -48,7 +48,8 @@ void tmcm_initMotorConfig()
 	motorConfig[0].hallInterpolation		= 1;
 	motorConfig[0].hallPhiEOffset			= 0;
 
-	motorConfig[0].dualShuntFactor			= 230;// u8.s8 // todo: check with current probe! (ED)
+	motorConfig[0].dualShuntFactor			= 135;
+
 	motorConfig[0].shaftBit					= 1;
 
 	motorConfig[0].pidTorque_P_param		= 1500;
@@ -79,14 +80,14 @@ void tmcm_updateConfig()
 	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
 
 	// use motor config to update tosv values with EEPROM stored values
-// todo: (like tosvConfig[0]->timeStartup = motorConfig[0].tosvTimeStartup;)
-//	config->timeStartup = 2000;
-//	config->timeState1 = 500;
-//	config->timeState2 = 1000;
-//	config->timeState3 = 500;
-//	config->timeState4 = 1000;
-//	config->maxPressure = 2000;
-//	config->peepPressure = 1200;
+// todo: (like tosvConfig[0]->tStartup = motorConfig[0].tosvtStartup;)
+//	config->timeStartup
+//	config->tInhalationRise
+//	config->tInhalationPause
+//	config->tExhalationFall
+//	config->tExhalationPause
+//	config->pLIMIT
+//	config->pPEEP
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control
