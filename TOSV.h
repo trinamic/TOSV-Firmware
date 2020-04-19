@@ -13,12 +13,12 @@
 	typedef struct
 	{
 		uint8_t  actualState;
-		uint32_t timer;
-		uint32_t tStartup;
-		uint32_t tInhalationRise;
-		uint32_t tInhalationPause;
-		uint32_t tExhalationFall;
-		uint32_t tExhalationPause;
+		uint16_t timer;
+		uint16_t tStartup;
+		uint16_t tInhalationRise;
+		uint16_t tInhalationPause;
+		uint16_t tExhalationFall;
+		uint16_t tExhalationPause;
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
 	} TOSV_Config;
@@ -34,21 +34,5 @@
 	void tosv_process(TOSV_Config *config);
 	void tosv_enableVentilator(TOSV_Config *config, bool enable);
 	bool tosv_isVentilatorEnabled(TOSV_Config *config);
-
-//uint8_t TOSV_setPEEP(uint32_t value);
-//uint8_t TOSV_setLimit(uint32_t value);
-//uint8_t TOSV_setRiseTime(uint32_t value);
-//uint8_t TOSV_setFallTime(uint32_t value);
-//uint8_t TOSV_setFrequency(uint32_t value);
-//uint8_t TOSV_setItoE(uint32_t value);
-//uint8_t TOSV_setVolume(uint32_t value);
-//uint32_t TOSV_getPEEP(void);
-//uint32_t TOSV_getLimit(void);
-//uint32_t TOSV_getRiseTime(void);
-//uint32_t TOSV_getFallTime(void);
-//uint32_t TOSV_getFrequency(void);
-//uint32_t TOSV_getItoE(void);
-//uint32_t TOSV_getVolume(void);
-
 
 #endif

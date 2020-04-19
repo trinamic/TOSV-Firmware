@@ -12,7 +12,7 @@
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
 // general module settings
-const char *VersionString="0020V102";
+const char *VersionString="0020V103";
 
 // ADC configuration
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001244C)
@@ -32,6 +32,8 @@ void tmcm_initModuleConfig()
 
 void tmcm_initMotorConfig()
 {
+	// firmware default values
+
 	motorConfig[0].maximumCurrent 			= 3000;
 	motorConfig[0].maxVelocity 				= 80000;
 	motorConfig[0].acceleration				= 20000;
@@ -63,7 +65,13 @@ void tmcm_initMotorConfig()
 
 	motorConfig[0].pwm_freq 				= 100000;
 
-
+	motorConfig[0].tStartup					= 1000;
+	motorConfig[0].tInhalationRise			= 500;
+	motorConfig[0].tInhalationPause			= 1000;
+	motorConfig[0].tExhalationFall			= 500;
+	motorConfig[0].tExhalationPause			= 1500;
+	motorConfig[0].pLIMIT					= 5000;
+	motorConfig[0].pPEEP					= 1500;
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);
@@ -83,14 +91,13 @@ void tmcm_updateConfig()
 	rampGenerator[0].rampEnabled  = motorConfig[0].useVelocityRamp;
 
 	// use motor config to update tosv values with EEPROM stored values
-// todo: (like tosvConfig[0]->tStartup = motorConfig[0].tosvtStartup;)
-//	config->timeStartup
-//	config->tInhalationRise
-//	config->tInhalationPause
-//	config->tExhalationFall
-//	config->tExhalationPause
-//	config->pLIMIT
-//	config->pPEEP
+	tosvConfig[0].tStartup 			= motorConfig[0].tStartup;
+	tosvConfig[0].tInhalationRise 	= motorConfig[0].tInhalationRise;
+	tosvConfig[0].tInhalationPause 	= motorConfig[0].tInhalationPause;
+	tosvConfig[0].tExhalationFall 	= motorConfig[0].tExhalationFall;
+	tosvConfig[0].tExhalationPause 	= motorConfig[0].tExhalationPause;
+	tosvConfig[0].pLIMIT 			= motorConfig[0].pLIMIT;
+	tosvConfig[0].pPEEP 			= motorConfig[0].pPEEP;
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control

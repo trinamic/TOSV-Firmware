@@ -60,7 +60,14 @@
 
 		int16_t hallPhiEOffset;
 
-
+		// tosv settings
+		uint16_t tStartup;
+		uint16_t tInhalationRise;
+		uint16_t tInhalationPause;
+		uint16_t tExhalationFall;
+		uint16_t tExhalationPause;
+		uint32_t pLIMIT;
+		uint32_t pPEEP;
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;

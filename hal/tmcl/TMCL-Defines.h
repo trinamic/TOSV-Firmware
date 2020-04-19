@@ -28,18 +28,12 @@
 	#define TMCL_RSGP 						12
 	#define TMCL_SIO 						14
 	#define TMCL_GIO 						15
-	#define TMCL_UF0            64
-	#define TMCL_UF1            65
 	#define TMCL_GetVersion 				136
 	#define TMCL_FactoryDefault 			137
 	#define TMCL_writeRegisterChannel_1		146
 	#define TMCL_writeRegisterChannel_2		147
 	#define TMCL_readRegisterChannel_1		148
 	#define TMCL_readRegisterChannel_2		149
-	#define TMCL_SetVentilatorParameter   150
-	#define TMCL_GetVentilatorParameter   151
-	#define TMCL_StartVentilator          152
-	#define TMCL_StopVentilator           153
 	#define TMCL_Boot 						242
 	#define TMCL_SoftwareReset 				255
 

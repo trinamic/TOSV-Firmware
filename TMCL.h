@@ -12,7 +12,6 @@
 	#include "BLDC.h"
 	#include "hal/modules/SelectModule.h"
 
-
 	void tmcl_init();
 	void tmcl_processCommand();
 	void tmcl_resetCPU(uint8_t resetPeripherals);
