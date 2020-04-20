@@ -25,8 +25,8 @@
 	#define MAX_CURRENT 				(int32_t)6000		// RMS current
 	#define MAX_PRESSURE				(int32_t)70000
 
-	//#define USE_PRESSURE_SENSOR_1	// standard setup
-	#define USE_PRESSURE_SENSOR_2	// setup ED
+//	#define TMCM_USE_IIC_INTERFACE
+	#define I2C_PRESSURE_SENSOR_SM9333
 
 	// ===== UART configuration =====
 	#define USE_UART_INTERFACE

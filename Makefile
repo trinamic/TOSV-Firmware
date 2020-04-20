@@ -92,6 +92,7 @@ ifeq ($(CPU),F103)
 	SRC += $(CPU_INC_DIR)/stm32f10x_tim.c
 	SRC += $(CPU_INC_DIR)/stm32f10x_usart.c
 	SRC += $(CPU_INC_DIR)/stm32f10x_spi.c
+	SRC += $(CPU_INC_DIR)/stm32f10x_i2c.c
 	SRC += $(CPU_INC_DIR)/stm32f10x_systick.c
 	SRC += $(CPU_INC_DIR)/stm32f10x_it.c
 	SRC += $(CPU_INC_DIR)/stm32f10x_vector.c
@@ -143,6 +144,7 @@ SRC += hal/comm/Eeprom.c
 SRC += hal/comm/SPI.c
 SRC += hal/comm/UART.c
 SRC += hal/comm/USB.c
+SRC += hal/comm/I2C.c
 SRC += hal/Flags.c
 
 # general motor control and interfacing
