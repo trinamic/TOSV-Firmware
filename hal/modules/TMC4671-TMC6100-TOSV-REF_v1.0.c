@@ -55,9 +55,9 @@ void tmcm_initMotorConfig()
 
 	motorConfig[0].shaftBit					= 1;
 
-	motorConfig[0].pidTorque_P_param		= 1500;
-	motorConfig[0].pidTorque_I_param		= 100;
-	motorConfig[0].pidVelocity_P_param		= 200;
+	motorConfig[0].pidTorque_P_param		= 300;
+	motorConfig[0].pidTorque_I_param		= 1000;
+	motorConfig[0].pidVelocity_P_param		= 500;
 	motorConfig[0].pidVelocity_I_param		= 100;
 
 	motorConfig[0].pidPressure_P_param		= 3000;

@@ -29,8 +29,10 @@
 	int32_t gTargetSpeed[NUMBER_OF_MOTORS];
 
 	// pressure regulation
+	int64_t akkuActualPressure[NUMBER_OF_MOTORS];
 	int32_t	gDesiredPressure[NUMBER_OF_MOTORS];			// requested target pressure
 	int32_t gActualPressure[NUMBER_OF_MOTORS];
+	int32_t actualPressurePT1[NUMBER_OF_MOTORS];
 	int32_t gTargetPressure[NUMBER_OF_MOTORS];
 	PIControl pressurePID;
 
@@ -67,6 +69,8 @@ void bldc_init()
 		gTargetSpeed[i] = 0;
 
 		// pressure mode
+		akkuActualPressure[i] = 0;
+		actualPressurePT1[i] = 0;
 		gDesiredPressure[i] = 0;
 		gActualPressure[i] = 0;
 		gTargetPressure[i] = 0;
@@ -159,9 +163,11 @@ void bldc_processBLDC()
 			}
 
 			// always read actual pressure
-			int32_t pressure = ((int32_t)tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*100000)/2068-20000; // todo: adjustable offset parameter needed (ED)
+			int32_t pressure = ((int32_t)tmcm_getModuleSpecificADCValue(PRESSURE_SENSOR_PIN)*25000)/517-20000; // todo: adjustable offset parameter needed (ED)
+			gActualPressure[motor] = (pressure < 0) ? 0 : pressure;
 
-			gActualPressure[motor] = (pressure > 0) ? pressure : 0;
+			// use filtered value for user interface
+			actualPressurePT1[motor] = tmc_filterPT1(&akkuActualPressure[motor], gActualPressure[motor], actualPressurePT1[motor], 2, 8);
 
 			// ramp handling
 			if (flags_isStatusFlagSet(motor, PRESSURE_MODE))
@@ -617,5 +623,5 @@ bool bldc_setTargetPressure(uint8_t motor, int32_t targetPressure)
 
 int32_t bldc_getActualPressure(uint8_t motor) // unit: Pa
 {
-	return gActualPressure[motor];
+	return actualPressurePT1[motor];
 }
