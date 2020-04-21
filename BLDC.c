@@ -9,6 +9,7 @@
 #include "hal/system/SysTick.h"
 #include "hal/system/SystemInfo.h"
 #include "hal/system/Debug.h"
+#include "hal/comm/I2C.h"
 #include <math.h>
 
 	// === private variables ===
@@ -16,6 +17,7 @@
 	// general information
 	int16_t gActualMotorTemperature = 0;				// actual motor temperature
 	int16_t	gActualSupplyVoltage = 0;					// actual supply voltage
+	int16_t gActualFlowValue = 0;
 
 	// torque regulation
 	int64_t akkuActualTorqueFlux[NUMBER_OF_MOTORS];
@@ -45,6 +47,7 @@
 	// general information
 	void bldc_checkSupplyVoltage(uint8_t motor);
 	void bldc_checkMotorTemperature();
+	void bldc_updateFlowSensor();
 
 
 	// === implementation ===
@@ -134,6 +137,7 @@ void bldc_processBLDC()
 
 			bldc_checkSupplyVoltage(motor);
 			bldc_checkMotorTemperature();
+			//bldc_updateFlowSensor();
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -287,6 +291,11 @@ int16_t bldc_getMotorTemperature()
 	return gActualMotorTemperature;
 }
 
+int16_t bldc_getFlowValue()
+{
+	return gActualFlowValue;
+}
+
 void bldc_checkMotorTemperature()
 {
 	float vTherm = tmcm_getModuleSpecificADCValue(ADC_MOT_TEMP)*3.3 / 4095.0;
@@ -310,6 +319,32 @@ void bldc_checkMotorTemperature()
 			flags_clearStatusFlag(motor, OVERTEMPERATURE);
 		}
 	}
+}
+
+/* read out SM9333 I2C pressure sensor value and calculate flow value from it
+ *
+ * in the first step the address (0x30) to be read from is send to the sensor via write
+ * then pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read
+ *
+ * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
+ */
+void bldc_updateFlowSensor()
+{
+	uint8_t writeData[] = {0x30};
+	uint16_t readData[2];
+	uint8_t isI2cAccessSuccess;
+
+	isI2cAccessSuccess = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8); // bp: not sure if slave address 6C must not be shifted
+
+	if (isI2cAccessSuccess)
+	{
+		I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8); // bp: not sure if slave address 6C must not be shifted
+	}
+
+	// TODO: calculate flow from pressure difference
+	gActualFlowValue = readData[0];
+	debug_setTestVar0(gActualFlowValue);
+	debug_setTestVar1(readData[1]);
 }
 
 // ===== ADC offset configuration =====

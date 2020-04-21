@@ -13,7 +13,7 @@
 	#include "../Hal_Definitions.h"
 
 void InitIIC(void);
-//UCHAR I2C_Master_BufferRead(I2C_TypeDef* I2Cx, UCHAR* pBuffer,  UINT NumByteToRead, UCHAR SlaveAddress);
-//UCHAR I2C_Master_BufferWrite(I2C_TypeDef* I2Cx, UCHAR* pBuffer,  UINT NumByteToWrite, UCHAR SlaveAddress);
+uint8_t I2C_Master_BufferRead(I2C_TypeDef* I2Cx, u8* pBuffer,  u32 NumByteToRead, u8 SlaveAddress);
+uint8_t I2C_Master_BufferWrite(I2C_TypeDef* I2Cx, u8* pBuffer,  u32 NumByteToWrite, u8 SlaveAddress );
 
 #endif
