@@ -129,6 +129,7 @@ static void I2C_LowLevel_Init(I2C_TypeDef* I2Cx)
   if (I2Cx == I2C1)
   {
     /* I2C1 clock enable */
+    GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);  //legt I2C1 auf PB8/PB9 statt PB6/PB7
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
     /* I2C1 SDA and SCL configuration */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
