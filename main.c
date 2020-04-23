@@ -10,6 +10,7 @@
 #include "hal/system/SysTick.h"
 #include "hal/system/SystemInfo.h"
 #include "hal/comm/SPI.h"
+#include "hal/comm/I2C.h"
 #include "BLDC.h"
 #include "TMCL.h"
 
@@ -38,6 +39,8 @@ int main(void)
 
 	spi_init();
 	eeprom_initConfig();
+
+	InitIIC();
 
 	// initialize communication interfaces
 #ifdef USE_UART_INTERFACE

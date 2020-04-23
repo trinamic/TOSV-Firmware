@@ -183,9 +183,7 @@ static void I2C_LowLevel_Init(I2C_TypeDef* I2Cx)
   I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
   I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
 
-  #if defined DIFF_PRESSURE_SENSOR_SM9333
-  I2C_InitStructure.I2C_ClockSpeed = 400000;  //400kHz (other devices)
-  #endif
+  I2C_InitStructure.I2C_ClockSpeed = 100000;  // 100kHz (more did not work for the SM9333)
 
   I2C_Init(I2C1, &I2C_InitStructure);
   I2C_InitStructure.I2C_OwnAddress1 = OwnAddress2;

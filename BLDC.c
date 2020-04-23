@@ -44,6 +44,9 @@
 	// motion mode
 	uint32_t gMotionMode[NUMBER_OF_MOTORS];
 
+	// don't crash the system if pressure sensor for flow measurement is not present
+	bool gIsFlowSensorPresent = false;
+
 	// general information
 	void bldc_checkSupplyVoltage(uint8_t motor);
 	void bldc_checkMotorTemperature();
@@ -83,6 +86,15 @@ void bldc_init()
 		flags_init(i);
 		flags_setStatusFlag(i, STOP_MODE);
 	}
+
+	// try writing to flow sensor to check its presence
+	uint8_t writeData[] = {0x30};
+
+	uint8_t isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
+
+	// if not, don't read out the flow sensor cyclically
+	gIsFlowSensorPresent = (bool)isI2cWriteSuccessful;
+
 }
 
 int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int32_t actualPressure, PIControl *pid, int32_t maxPressure, int32_t maxTorque)
@@ -137,7 +149,7 @@ void bldc_processBLDC()
 
 			bldc_checkSupplyVoltage(motor);
 			bldc_checkMotorTemperature();
-			//bldc_updateFlowSensor();
+			bldc_updateFlowSensor();
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -326,25 +338,32 @@ void bldc_checkMotorTemperature()
  * in the first step the address (0x30) to be read from is send to the sensor via write
  * then pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read
  *
+ * the pressure sensor IC comprises also a temperature for temperature compensation if necessary
+ *
  * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
  */
 void bldc_updateFlowSensor()
 {
-	uint8_t writeData[] = {0x30};
-	uint16_t readData[2];
-	uint8_t isI2cAccessSuccess;
-
-	isI2cAccessSuccess = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8); // bp: not sure if slave address 6C must not be shifted
-
-	if (isI2cAccessSuccess)
+	if (gIsFlowSensorPresent)
 	{
-		I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8); // bp: not sure if slave address 6C must not be shifted
-	}
+		uint8_t writeData[] = {0x30};
+		uint16_t readData[2];
+		uint8_t isI2cWriteSuccessful;
 
-	// TODO: calculate flow from pressure difference
-	gActualFlowValue = readData[0];
-	debug_setTestVar0(gActualFlowValue);
-	debug_setTestVar1(readData[1]);
+		isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
+
+		if (isI2cWriteSuccessful)
+		{
+			I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8);
+
+			// TODO: calculate flow from pressure difference
+			gActualFlowValue = readData[0];
+			uint16_t sensorStatus = readData[1];
+
+			debug_setTestVar0(gActualFlowValue);
+			debug_setTestVar1(sensorStatus);
+		}
+	}
 }
 
 // ===== ADC offset configuration =====
