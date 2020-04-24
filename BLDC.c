@@ -341,14 +341,21 @@ void bldc_checkMotorTemperature()
 	}
 }
 
-/* read out SM9333 I2C pressure sensor value and calculate flow value from it
+/* Read out SM9333 I2C pressure sensor value and calculate flow value from it.
  *
- * in the first step the address (0x30) to be read from is send to the sensor via write
- * then pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read
+ * In the first step the address (0x30) to be read from is send to the sensor via write.
+ * Then the pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read.
+ * For now the status word is not processed in any way.
  *
- * the SM9333 comprises also a temperature sensor for temperature compensation if necessary
+ * The SM9333 comprises also a temperature sensor for temperature compensation if necessary.
  *
  * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
+ *
+ * We constantly filled a 120 liter garbage bag for rough calibration. It took 2 minutes until
+ * filled with air and we read an sensor count of 32000 during filling, thus we
+ * approximate 1 count to 2 ml/min.
+ *
+ * Please beware that this is not very accurate!
  */
 void bldc_updateFlowSensor()
 {
@@ -364,10 +371,10 @@ void bldc_updateFlowSensor()
 		{
 			I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8);
 
-			// TODO: calculate flow from pressure difference
-			gActualFlowValue = readData[0];
-			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 8, 8);
-			uint16_t sensorStatus = readData[1];
+			int16_t pressureSensorCount = readData[0];
+			gActualFlowValue = pressureSensorCount * 2;
+			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 2, 8);
+			uint16_t sensorStatus = readData[1]; // unused - see description above
 		}
 	}
 }
