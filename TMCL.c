@@ -1110,6 +1110,19 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 
+			case 110: // actual flow
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getFlowValue();
+				}
+				break;
+			case 111: // zero flow
+				if (command == TMCL_SAP)
+				{
+					bldc_zeroFlow();
+				}
+				break;
+
 			// ===== debugging =====
 
 			case 240: // debug value 0

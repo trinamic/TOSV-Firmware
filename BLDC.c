@@ -18,6 +18,9 @@
 	int16_t gActualMotorTemperature = 0;				// actual motor temperature
 	int16_t	gActualSupplyVoltage = 0;					// actual supply voltage
 	int16_t gActualFlowValue = 0;
+	int32_t gActualFlowValuePT1 = 0;
+	int64_t gActualFlowValueAccu = 0;
+	int16_t gFlowOffset = 0;
 
 	// torque regulation
 	int64_t akkuActualTorqueFlux[NUMBER_OF_MOTORS];
@@ -305,7 +308,12 @@ int16_t bldc_getMotorTemperature()
 
 int16_t bldc_getFlowValue()
 {
-	return gActualFlowValue;
+	return gActualFlowValuePT1;
+}
+
+void bldc_zeroFlow()
+{
+	gFlowOffset = -gActualFlowValue;
 }
 
 void bldc_checkMotorTemperature()
@@ -338,7 +346,7 @@ void bldc_checkMotorTemperature()
  * in the first step the address (0x30) to be read from is send to the sensor via write
  * then pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read
  *
- * the pressure sensor IC comprises also a temperature for temperature compensation if necessary
+ * the SM9333 comprises also a temperature sensor for temperature compensation if necessary
  *
  * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
  */
@@ -358,10 +366,8 @@ void bldc_updateFlowSensor()
 
 			// TODO: calculate flow from pressure difference
 			gActualFlowValue = readData[0];
+			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 8, 8);
 			uint16_t sensorStatus = readData[1];
-
-			debug_setTestVar0(gActualFlowValue);
-			debug_setTestVar1(sensorStatus);
 		}
 	}
 }
