@@ -319,7 +319,7 @@ int16_t bldc_getMotorTemperature()
 	return gActualMotorTemperature;
 }
 
-int16_t bldc_getFlowValue()
+int32_t bldc_getFlowValue()
 {
 	return gActualFlowValuePT1;
 }

@@ -18,7 +18,7 @@
 	// ===== general info =====
 	int16_t bldc_getSupplyVoltage();
 	int16_t bldc_getMotorTemperature();
-	int16_t bldc_getFlowValue();
+	int32_t bldc_getFlowValue();
 	int32_t bldc_getVolumeValue();
 	void bldc_zeroFlow();
 	void bldc_resetVolumeIntegration();
