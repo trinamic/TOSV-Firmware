@@ -21,6 +21,8 @@
 	int32_t gActualFlowValuePT1 = 0;
 	int64_t gActualFlowValueAccu = 0;
 	int16_t gFlowOffset = 0;
+	int64_t gFlowSum = 0;
+	int32_t gActualVolume = 0;
 
 	// torque regulation
 	int64_t akkuActualTorqueFlux[NUMBER_OF_MOTORS];
@@ -98,6 +100,16 @@ void bldc_init()
 	// if not, don't read out the flow sensor cyclically
 	gIsFlowSensorPresent = (bool)isI2cWriteSuccessful;
 
+	// zero the flow sensor initially after a 3 second sleep
+	if (gIsFlowSensorPresent)
+	{
+		uint32_t delay = systick_getTimer();
+		while(abs(systick_getTimer()-delay) < 3000){;}
+
+		bldc_updateFlowSensor();
+		bldc_zeroFlow();
+	}
+
 }
 
 int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int32_t actualPressure, PIControl *pid, int32_t maxPressure, int32_t maxTorque)
@@ -153,6 +165,7 @@ void bldc_processBLDC()
 			bldc_checkSupplyVoltage(motor);
 			bldc_checkMotorTemperature();
 			bldc_updateFlowSensor();
+			bldc_updateVolume();
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -311,9 +324,20 @@ int16_t bldc_getFlowValue()
 	return gActualFlowValuePT1;
 }
 
+
+int32_t bldc_getVolumeValue()
+{
+	return gActualVolume;
+}
+
 void bldc_zeroFlow()
 {
 	gFlowOffset = -gActualFlowValue;
+}
+
+void bldc_resetVolumeIntegration()
+{
+	gFlowSum = 0;
 }
 
 void bldc_checkMotorTemperature()
@@ -373,9 +397,22 @@ void bldc_updateFlowSensor()
 
 			int16_t pressureSensorCount = readData[0];
 			gActualFlowValue = pressureSensorCount * 2;
-			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 2, 8);
+			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 5, 8);
 			uint16_t sensorStatus = readData[1]; // unused - see description above
 		}
+	}
+}
+
+/* Volume is given in ml.
+ *
+ * As flow is ml/min and cycle time is 1 ms we need to divide the sum by 60000 (min -> s -> ms)
+ */
+void bldc_updateVolume()
+{
+	if (gIsFlowSensorPresent)
+	{
+		gFlowSum += gActualFlowValue;
+		gActualVolume = gFlowSum / 60000;
 	}
 }
 

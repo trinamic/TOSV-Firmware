@@ -1122,6 +1122,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					bldc_zeroFlow();
 				}
 				break;
+			case 113: // actual folume
+				if (command == TMCL_GAP)
+				{
+					*value = bldc_getVolumeValue();
+				}
+				break;
 
 			// ===== debugging =====
 
