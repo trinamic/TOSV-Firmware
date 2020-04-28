@@ -411,7 +411,7 @@ void bldc_updateVolume()
 {
 	if (gIsFlowSensorPresent)
 	{
-		gFlowSum += gActualFlowValue;
+		gFlowSum += (gFlowOffset + gActualFlowValue);
 		gActualVolume = gFlowSum / 60000;
 	}
 }
