@@ -56,6 +56,7 @@ void tosv_process(TOSV_Config *config)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
+				bldc_zeroFlow();
 				bldc_resetVolumeIntegration();
 			}
 			break;

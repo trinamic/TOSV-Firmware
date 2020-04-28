@@ -100,16 +100,6 @@ void bldc_init()
 	// if not, don't read out the flow sensor cyclically
 	gIsFlowSensorPresent = (bool)isI2cWriteSuccessful;
 
-	// zero the flow sensor initially after a 3 second sleep
-	if (gIsFlowSensorPresent)
-	{
-		uint32_t delay = systick_getTimer();
-		while(abs(systick_getTimer()-delay) < 3000){;}
-
-		bldc_updateFlowSensor();
-		bldc_zeroFlow();
-	}
-
 }
 
 int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int32_t actualPressure, PIControl *pid, int32_t maxPressure, int32_t maxTorque)
