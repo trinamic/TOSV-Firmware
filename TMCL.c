@@ -938,6 +938,21 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 //				break;
 
 			// ===== tosv settings =====
+			case 99: // TOSV mode
+				if (command == TMCL_SAP)
+				{
+					if (*value == 0)
+						tosvConfig[motor].mode = TOSV_MODE_P_CONTROL;
+					else if (*value == 1)
+						tosvConfig[motor].mode = TOSV_MODE_V_CONTROL;
+					else
+						errors = REPLY_INVALID_VALUE;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].mode;
+				}
+				break;
 			case 100: // enable tosv
 				if (command == TMCL_SAP)
 				{

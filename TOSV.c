@@ -6,8 +6,16 @@
  */
 
 #include "TOSV.h"
+#include "BLDC.h"
 
-extern bool bldc_setTargetPressure(uint8_t motor, int32_t targetPressure);
+
+// private function declarations
+
+void tosv_process_p_control(TOSV_Config *config);
+void tosv_process_v_control(TOSV_Config *config);
+
+
+// public function implementations
 
 void tosv_init(TOSV_Config *config)
 {
@@ -20,6 +28,7 @@ void tosv_init(TOSV_Config *config)
 	config->tExhalationPause 	= 1000;
 	config->pLIMIT				= 20000;
 	config->pPEEP 				= 2000;
+	config->mode				= TOSV_MODE_P_CONTROL;
 }
 
 void tosv_enableVentilator(TOSV_Config *config, bool enable)
@@ -37,10 +46,31 @@ void tosv_enableVentilator(TOSV_Config *config, bool enable)
 
 bool tosv_isVentilatorEnabled(TOSV_Config *config)
 {
-	return (config->actualState != TOSV_STATE_STOPPED) ? true : false;
+	return (config->actualState != TOSV_STATE_STOPPED);
 }
 
 void tosv_process(TOSV_Config *config)
+{
+	switch (config->mode)
+	{
+		case TOSV_MODE_P_CONTROL:
+			tosv_process_p_control(config);
+			break;
+		case TOSV_MODE_V_CONTROL:
+			tosv_process_v_control(config);
+			break;
+		default:
+			break;
+	}
+}
+
+
+// private function implementations
+
+/*
+ * state machine for pressure based control
+ */
+void tosv_process_p_control(TOSV_Config *config)
 {
 	config->timer++;
 
@@ -94,4 +124,13 @@ void tosv_process(TOSV_Config *config)
 			}
 			break;
 	}
+}
+
+
+/*
+ * state machine for volume based control
+ */
+void tosv_process_v_control(TOSV_Config *config)
+{
+
 }

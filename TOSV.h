@@ -10,6 +10,12 @@
 
 	#include "TMC-API/tmc/helpers/API_Header.h"
 
+	typedef enum
+	{
+	  TOSV_MODE_P_CONTROL,
+	  TOSV_MODE_V_CONTROL,
+	} TOSV_Mode;
+
 	typedef struct
 	{
 		uint8_t  actualState;
@@ -21,6 +27,7 @@
 		uint16_t tExhalationPause;
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
+		TOSV_Mode mode;
 	} TOSV_Config;
 
 	#define TOSV_STATE_STOPPED				0
