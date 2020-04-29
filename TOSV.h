@@ -12,8 +12,8 @@
 
 	typedef enum
 	{
-	  TOSV_MODE_P_CONTROL,
-	  TOSV_MODE_V_CONTROL,
+	  TOSV_MODE_PRESSURE_CONTROL,
+	  TOSV_MODE_VOLUME_CONTROL,
 	} TOSV_Mode;
 
 	typedef struct
@@ -27,6 +27,7 @@
 		uint16_t tExhalationPause;
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
+		uint32_t volumeMax;
 		TOSV_Mode mode;
 	} TOSV_Config;
 

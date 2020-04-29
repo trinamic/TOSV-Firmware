@@ -63,6 +63,9 @@ void tmcm_initMotorConfig()
 	motorConfig[0].pidPressure_P_param		= 3000;
 	motorConfig[0].pidPressure_I_param		= 3000;
 
+	motorConfig[0].pidVolume_P_param		= 3000;
+	motorConfig[0].pidVolume_I_param		= 3000;
+
 	motorConfig[0].pwm_freq 				= 100000;
 
 	motorConfig[0].tStartup					= 1000;

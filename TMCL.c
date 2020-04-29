@@ -927,6 +927,33 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 
+
+			case 56: // volume P
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidVolume_P_param = *value;
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidVolume_P_param;
+				}
+				break;
+			case 57: // volume I
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= 32767))
+					{
+						motorConfig[motor].pidVolume_I_param = *value;
+					}
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].pidVolume_I_param;
+				}
+				break;
 			// ===== brake chopper settings  ===== (placeholder (ED))
 //			case 60: // brake chopper enable
 //				break;
@@ -942,9 +969,9 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				if (command == TMCL_SAP)
 				{
 					if (*value == 0)
-						tosvConfig[motor].mode = TOSV_MODE_P_CONTROL;
+						tosvConfig[motor].mode = TOSV_MODE_PRESSURE_CONTROL;
 					else if (*value == 1)
-						tosvConfig[motor].mode = TOSV_MODE_V_CONTROL;
+						tosvConfig[motor].mode = TOSV_MODE_VOLUME_CONTROL;
 					else
 						errors = REPLY_INVALID_VALUE;
 				}

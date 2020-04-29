@@ -48,6 +48,9 @@
 		uint16_t pidPressure_P_param;
 		uint16_t pidPressure_I_param;
 
+		uint16_t pidVolume_P_param;
+		uint16_t pidVolume_I_param;
+
 		uint8_t motorType;
 		uint8_t motorPolePairs;
 		uint8_t shaftBit;
