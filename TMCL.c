@@ -1164,10 +1164,25 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					bldc_zeroFlow();
 				}
 				break;
-			case 113: // actual folume
+			case 112:
+				if (command == TMCL_SAP)
+				{
+					if(!bldc_setTargetVolume(motor, *value))
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getTargetVolume(motor);
+				}
+				break;
+			case 113: // actual volume
 				if (command == TMCL_GAP)
 				{
-					*value = bldc_getVolumeValue();
+					*value = bldc_getActualVolume(motor);
+				}
+				break;
+			case 114: // max volume
+				if (command == TMCL_GAP)
+				{
+					// ...
 				}
 				break;
 

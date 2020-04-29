@@ -19,7 +19,6 @@
 	int16_t bldc_getSupplyVoltage();
 	int16_t bldc_getMotorTemperature();
 	int32_t bldc_getFlowValue();
-	int32_t bldc_getVolumeValue();
 	void bldc_zeroFlow();
 	void bldc_resetVolumeIntegration();
 
@@ -63,6 +62,11 @@
 	bool bldc_setTargetPressure(uint8_t motor, int32_t pressure);
 	int32 bldc_getActualPressure(uint8_t motor);
 	int32_t bldc_getPressureErrorSum(uint8_t motor);
+
+	// ===== volume control mode settings =====
+	bool bldc_setTargetVolume(uint8_t motor, int32_t targetVolume);
+	int32 bldc_getTargetVolume(uint8_t motor);
+	int32_t bldc_getActualVolume(uint8_t motor);
 
 	// ===== pi controller mode settings =====
 	void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode);

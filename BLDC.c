@@ -22,7 +22,6 @@
 	int64_t gActualFlowValueAccu = 0;
 	int16_t gFlowOffset = 0;
 	int64_t gFlowSum = 0;
-	int32_t gActualVolume = 0;
 
 	// torque regulation
 	int64_t akkuActualTorqueFlux[NUMBER_OF_MOTORS];
@@ -43,6 +42,10 @@
 	int32_t gTargetPressure[NUMBER_OF_MOTORS];
 	PIControl pressurePID;
 
+	// volume regulation
+	int32_t	gDesiredVolume[NUMBER_OF_MOTORS];			// requested target volume
+	int32_t gActualVolume[NUMBER_OF_MOTORS];
+
 	// commutation mode
 	uint8_t	gLastSetCommutationMode[NUMBER_OF_MOTORS];	// actual regulation mode
 
@@ -56,6 +59,7 @@
 	void bldc_checkSupplyVoltage(uint8_t motor);
 	void bldc_checkMotorTemperature();
 	void bldc_updateFlowSensor();
+	void bldc_updateVolume(uint8_t motor);
 
 
 	// === implementation ===
@@ -86,6 +90,10 @@ void bldc_init()
 		gActualPressure[i] = 0;
 		gTargetPressure[i] = 0;
 		pressurePID.errorSum = 0;
+
+		// volume mode
+		gDesiredVolume[i] = 0;
+		gActualVolume[i] = 0;
 
 		// flags
 		flags_init(i);
@@ -155,7 +163,7 @@ void bldc_processBLDC()
 			bldc_checkSupplyVoltage(motor);
 			bldc_checkMotorTemperature();
 			bldc_updateFlowSensor();
-			bldc_updateVolume();
+			bldc_updateVolume(motor);
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -314,15 +322,40 @@ int32_t bldc_getFlowValue()
 	return gActualFlowValuePT1;
 }
 
-
-int32_t bldc_getVolumeValue()
+int32 bldc_getTargetVolume(uint8_t motor)
 {
-	return gActualVolume;
+	return gDesiredVolume[motor];
+}
+
+bool bldc_setTargetVolume(uint8_t motor, int32_t targetVolume)
+{
+	if ((motorConfig[motor].commutationMode == COMM_MODE_FOC_DISABLED)
+	  ||(motorConfig[motor].commutationMode == COMM_MODE_FOC_OPEN_LOOP))
+		return false;
+
+	if (motor == 0)
+		debug_setTestVar0(targetVolume);
+
+//	if((targetPressure >= 0) && (targetPressure <= motorConfig[motor].maxPressure))
+//	{
+		gDesiredVolume[motor] = targetVolume;
+//
+//		// switch to velocity mode
+//		bldc_switchToRegulationMode(motor, PRESSURE_MODE);
+		return true;
+//	}
+//	return false;
+}
+
+
+int32_t bldc_getActualVolume(uint8_t motor)
+{
+	return gActualVolume[motor];
 }
 
 void bldc_zeroFlow()
 {
-	gFlowOffset = -gActualFlowValue;
+	gFlowOffset = gActualFlowValue;
 }
 
 void bldc_resetVolumeIntegration()
@@ -387,8 +420,8 @@ void bldc_updateFlowSensor()
 
 			int16_t pressureSensorCount = readData[0];
 			gActualFlowValue = pressureSensorCount * 2;
-			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gFlowOffset + gActualFlowValue), gActualFlowValuePT1, 5, 8);
-			uint16_t sensorStatus = readData[1]; // unused - see description above
+			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gActualFlowValue-gFlowOffset), gActualFlowValuePT1, 5, 8);
+			//uint16_t sensorStatus = readData[1]; // unused - see description above
 		}
 	}
 }
@@ -397,12 +430,12 @@ void bldc_updateFlowSensor()
  *
  * As flow is ml/min and cycle time is 1 ms we need to divide the sum by 60000 (min -> s -> ms)
  */
-void bldc_updateVolume()
+void bldc_updateVolume(uint8_t motor)
 {
 	if (gIsFlowSensorPresent)
 	{
-		gFlowSum += (gFlowOffset + gActualFlowValue);
-		gActualVolume = gFlowSum / 60000;
+		gFlowSum += (gActualFlowValue-gFlowOffset);
+		gActualVolume[motor] = gFlowSum / 60000;
 	}
 }
 

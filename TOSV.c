@@ -8,12 +8,9 @@
 #include "TOSV.h"
 #include "BLDC.h"
 
-
 // private function declarations
-
 void tosv_process_pressure_control(TOSV_Config *config);
 void tosv_process_volume_control(TOSV_Config *config);
-
 
 // public function implementations
 
@@ -79,6 +76,7 @@ void tosv_process_pressure_control(TOSV_Config *config)
 		case TOSV_STATE_STOPPED:
 			// reset timer
 			config->timer = 0;
+			bldc_resetVolumeIntegration();
 			break;
 		case TOSV_STATE_STARTUP:
 			bldc_setTargetPressure(0, 0 + (config->pPEEP*config->timer)/config->tStartup);
@@ -132,5 +130,56 @@ void tosv_process_pressure_control(TOSV_Config *config)
  */
 void tosv_process_volume_control(TOSV_Config *config)
 {
+	config->timer++;
 
+	switch(config->actualState)
+	{
+		case TOSV_STATE_STOPPED:
+			// reset timer
+			config->timer = 0;
+			bldc_resetVolumeIntegration();
+			break;
+		case TOSV_STATE_STARTUP:
+			bldc_setTargetVolume(0, 0);
+			if (config->timer >= config->tStartup)
+			{
+				config->actualState = TOSV_STATE_INHALATION_RISE;
+				config->timer = 0;
+			}
+			break;
+		case TOSV_STATE_INHALATION_RISE:
+			bldc_setTargetVolume(0, (config->volumeMax*config->timer)/config->tInhalationRise);
+			if (config->timer >= config->tInhalationRise)
+			{
+				config->actualState = TOSV_STATE_INHALATION_PAUSE;
+				config->timer = 0;
+			}
+			break;
+		case TOSV_STATE_INHALATION_PAUSE:
+			bldc_setTargetVolume(0, config->volumeMax);
+			if (config->timer >= config->tInhalationPause)
+			{
+				config->actualState = TOSV_STATE_EXHALATION_FALL;
+				config->timer = 0;
+			}
+			break;
+		case TOSV_STATE_EXHALATION_FALL:
+			//bldc_setTargetPressure(0, config->pPEEP + ((config->pLIMIT-config->pPEEP)*(config->tExhalationFall-config->timer))/config->tExhalationFall);
+			bldc_setTargetVolume(0, 0);
+			if (config->timer >= config->tExhalationFall)
+			{
+				config->actualState = TOSV_STATE_EXHALATION_PAUSE;
+				config->timer = 0;
+			}
+			break;
+		case TOSV_STATE_EXHALATION_PAUSE:
+			//bldc_setTargetPressure(0, config->pPEEP);
+			bldc_setTargetVolume(0, 0);
+			if (config->timer >= config->tExhalationPause)
+			{
+				config->actualState = TOSV_STATE_INHALATION_RISE;
+				config->timer = 0;
+			}
+			break;
+	}
 }
