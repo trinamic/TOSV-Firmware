@@ -34,7 +34,10 @@ void tosv_enableVentilator(TOSV_Config *config, bool enable)
 	{
 		// only start if not running
 		if (config->actualState == TOSV_STATE_STOPPED)
+		{
 			config->actualState = TOSV_STATE_STARTUP;
+			bldc_zeroFlow();
+		}
 	} else {
 		config->actualState = TOSV_STATE_STOPPED;
 		bldc_setTargetPressure(0, 0);
@@ -84,7 +87,6 @@ void tosv_process_pressure_control(TOSV_Config *config)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
-				bldc_zeroFlow();
 				bldc_resetVolumeIntegration();
 			}
 			break;

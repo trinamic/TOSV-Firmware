@@ -17,10 +17,10 @@
 	// general information
 	int16_t gActualMotorTemperature = 0;				// actual motor temperature
 	int16_t	gActualSupplyVoltage = 0;					// actual supply voltage
-	int16_t gActualFlowValue = 0;
+	int32_t gActualFlowValue = 0;
 	int32_t gActualFlowValuePT1 = 0;
 	int64_t gActualFlowValueAccu = 0;
-	int16_t gFlowOffset = 0;
+	int32_t gFlowOffset = 0;
 	int64_t gFlowSum = 0;
 
 	// torque regulation
@@ -419,7 +419,7 @@ void bldc_updateFlowSensor()
 			I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8);
 
 			int16_t pressureSensorCount = readData[0];
-			gActualFlowValue = pressureSensorCount * 2;
+			gActualFlowValue = (int32_t)pressureSensorCount * 2;
 			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gActualFlowValue-gFlowOffset), gActualFlowValuePT1, 5, 8);
 			//uint16_t sensorStatus = readData[1]; // unused - see description above
 		}
