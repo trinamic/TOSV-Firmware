@@ -36,6 +36,9 @@
 	uint16_t bldc_getMaxMotorCurrent(uint8_t motor);
 	void bldc_updateMaxMotorCurrent(uint8_t motor, uint16_t maxCurrent);
 
+	uint16_t bldc_getMaxNegativeMotorCurrent(uint8_t motor);
+	void bldc_updateMaxNegativeMotorCurrent(uint8_t motor, uint16_t maxCurrent);
+
 	uint8_t bldc_getMotorDirection(uint8_t motor);
 	bool bldc_setMotorDirection(uint8_t motor, uint8_t direction);
 

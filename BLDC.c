@@ -539,6 +539,16 @@ void bldc_updateMaxMotorCurrent(uint8_t motor, uint16_t maxCurrent)
 	tmc4671_setTorqueFluxLimit_mA(motor, motorConfig[motor].dualShuntFactor, maxCurrent);
 }
 
+uint16_t bldc_getMaxNegativeMotorCurrent(uint8_t motor)
+{
+	return motorConfig[motor].absMaxNegativeCurrent;
+}
+
+void bldc_updateMaxNegativeMotorCurrent(uint8_t motor, uint16_t maxCurrent)
+{
+	motorConfig[motor].absMaxNegativeCurrent = maxCurrent;
+}
+
 uint8_t bldc_getMotorDirection(uint8_t motor)
 {
 	return motorConfig[motor].shaftBit;

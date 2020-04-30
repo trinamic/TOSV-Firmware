@@ -845,6 +845,25 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 
+
+			case 49: // max negativ current
+				if (command == TMCL_SAP)
+				{
+					if((*value >= 0) && (*value <= MAX_CURRENT))
+						bldc_updateMaxNegativeMotorCurrent(motor, *value);
+					else
+						errors = REPLY_INVALID_VALUE;
+				} else if (command == TMCL_GAP) {
+					*value = bldc_getMaxNegativeMotorCurrent(motor);
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].absMaxNegativeCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].absMaxNegativeCurrent, sizeof(motorConfig[motor].absMaxNegativeCurrent));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].absMaxNegativeCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].absMaxNegativeCurrent, sizeof(motorConfig[motor].absMaxNegativeCurrent));
+				}
+				break;
+
 			// ===== hall sensor settings =====
 
 			case 50: // hall polarity
@@ -944,6 +963,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidVolume_P_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVolume_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVolume_P_param, sizeof(motorConfig[motor].pidVolume_P_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVolume_P_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVolume_P_param, sizeof(motorConfig[motor].pidVolume_P_param));
 				}
 				break;
 			case 57: // volume I
@@ -957,6 +982,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 						errors = REPLY_INVALID_VALUE;
 				} else if (command == TMCL_GAP) {
 					*value = motorConfig[motor].pidVolume_I_param;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVolume_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVolume_I_param, sizeof(motorConfig[motor].pidVolume_I_param));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].pidVolume_I_param-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].pidVolume_I_param, sizeof(motorConfig[motor].pidVolume_I_param));
 				}
 				break;
 			// ===== brake chopper settings  ===== (placeholder (ED))
