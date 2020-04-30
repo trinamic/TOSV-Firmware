@@ -40,11 +40,12 @@
 	int32_t gActualPressure[NUMBER_OF_MOTORS];
 	int32_t actualPressurePT1[NUMBER_OF_MOTORS];
 	int32_t gTargetPressure[NUMBER_OF_MOTORS];
-	PIControl pressurePID;
+	PIControl pressurePID[NUMBER_OF_MOTORS];
 
 	// volume regulation
 	int32_t	gDesiredVolume[NUMBER_OF_MOTORS];			// requested target volume
 	int32_t gActualVolume[NUMBER_OF_MOTORS];
+	PIControl volumePID[NUMBER_OF_MOTORS];
 
 	// commutation mode
 	uint8_t	gLastSetCommutationMode[NUMBER_OF_MOTORS];	// actual regulation mode
@@ -89,11 +90,12 @@ void bldc_init()
 		gDesiredPressure[i] = 0;
 		gActualPressure[i] = 0;
 		gTargetPressure[i] = 0;
-		pressurePID.errorSum = 0;
+		pressurePID[i].errorSum = 0;
 
 		// volume mode
 		gDesiredVolume[i] = 0;
 		gActualVolume[i] = 0;
+		volumePID[i].errorSum = 0;
 
 		// flags
 		flags_init(i);
@@ -110,10 +112,54 @@ void bldc_init()
 
 }
 
-int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int32_t actualPressure, PIControl *pid, int32_t maxPressure, int32_t maxTorque)
+int32_t bldc_getTargetPressureFromVolumePIRegulator(int32_t targetVolume, int32_t actualVolume, PIControl *pid, int32_t maxVolume, int32_t maxPressure, int32_t minPressure)
+{
+	// limit the target volume
+	targetVolume = tmc_limitInt(targetVolume, 0, maxVolume);
+
+	pid->pParam = motorConfig->pidVolume_P_param;
+	pid->iParam = motorConfig->pidVolume_I_param;
+
+	int32_t pDivisor = 16;
+	int64_t iDivisor = 4096;
+
+	pid->error = targetVolume-actualVolume;
+	pid->errorSum += pid->error;
+
+	debug_setTestVar1(targetVolume);
+	debug_setTestVar2(maxPressure);
+	debug_setTestVar3(minPressure);
+
+	debug_setTestVar4(pid->error);
+	debug_setTestVar5(pid->errorSum);
+
+	// compute min/max possible errorSum to reach the max regulator output
+	int64_t maxPosErrorSum = (pid->iParam == 0) ? 0: ((int64_t)maxPressure * iDivisor) / (int64_t)pid->iParam;
+
+	// limit error sum to prevent chasing and stay in positiv area
+	pid->errorSum = tmc_limitS64(pid->errorSum, 0, maxPosErrorSum);
+
+	int pPart = (pid->pParam * pid->error) / pDivisor;
+	int iPart = ((int64_t)pid->iParam * pid->errorSum) / iDivisor;
+	pid->result = pPart + iPart;
+
+	// limit the result to max alowed torque only in positive direction
+	return tmc_limitInt(pid->result, minPressure, maxPressure);
+}
+
+int32_t bldc_getVolumeErrorSum(uint8_t motor)
+{
+	return volumePID[motor].errorSum;
+}
+
+int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int32_t actualPressure, PIControl *pid, int32_t maxPressure, int32_t maxTorque, int32_t minTorque, int32_t actualVelocity)
 {
 	// limit the target pressure
 	targetPressure = tmc_limitInt(targetPressure, 0, maxPressure);
+
+	// allow negative toruqe only in positive actual velocity
+	if (actualVelocity < 0)
+		minTorque = 0;
 
 	pid->pParam = motorConfig->pidPressure_P_param;
 	pid->iParam = motorConfig->pidPressure_I_param;
@@ -124,24 +170,24 @@ int32_t bldc_getTargetTorqueFromPressurePIRegulator(int32_t targetPressure, int3
 	pid->error = targetPressure-actualPressure;
 	pid->errorSum += pid->error;
 
-	// compute max possible errorSum to reach the max target velocity
-	int64_t maxErrorSum = (pid->iParam == 0) ? 0: ((int64_t)maxTorque * iDivisor) / (int64_t)pid->iParam;
+	// compute min/max possible errorSum to reach the max regulator output
+	int64_t maxPosErrorSum = (pid->iParam == 0) ? 0: ((int64_t)maxTorque * iDivisor) / (int64_t)pid->iParam;
+	int64_t maxNegErrorSum = (pid->iParam == 0) ? 0: ((int64_t)minTorque * iDivisor) / (int64_t)pid->iParam;
 
 	// limit error sum to prevent chasing and stay in positiv area
-	pid->errorSum = tmc_limitS64(pid->errorSum, 0, maxErrorSum);
+	pid->errorSum = tmc_limitS64(pid->errorSum, maxNegErrorSum, maxPosErrorSum);
 
 	int pPart = (pid->pParam * pid->error) / pDivisor;
 	int iPart = ((int64_t)pid->iParam * pid->errorSum) / iDivisor;
 	pid->result = pPart + iPart;
 
-	// limit the result to max alowed torque only in positive direction
-	return tmc_limitInt(pid->result, 0, maxTorque);
+	// limit the result to max alowed torque
+	return tmc_limitInt(pid->result, minTorque, maxTorque);
 }
 
 int32_t bldc_getPressureErrorSum(uint8_t motor)
 {
-	UNUSED(motor);
-	return pressurePID.errorSum; // [motor]
+	return pressurePID[motor].errorSum;
 }
 
 /* main regulation function */
@@ -200,13 +246,20 @@ void bldc_processBLDC()
 			actualPressurePT1[motor] = tmc_filterPT1(&akkuActualPressure[motor], gActualPressure[motor], actualPressurePT1[motor], 2, 8);
 
 			// ramp handling
-			if (flags_isStatusFlagSet(motor, PRESSURE_MODE))
+
+			if (flags_isStatusFlagSet(motor, VOLUME_MODE))
+			{
+				debug_setTestVar0(gDesiredVolume[motor]);
+				gDesiredPressure[motor] = bldc_getTargetPressureFromVolumePIRegulator(gDesiredVolume[motor], gActualVolume[motor], &volumePID[motor], tosvConfig[motor].volumeMax, motorConfig[motor].maxPressure, tosvConfig[motor].pPEEP);
+			}
+
+			if (flags_isStatusFlagSet(motor, PRESSURE_MODE) || flags_isStatusFlagSet(motor, VOLUME_MODE))
 			{
 				// no ramp for pressure up to now
 				gTargetPressure[motor] = gDesiredPressure[motor];
 
 				// pressure pi regulation
-				gTargetTorque[motor] = bldc_getTargetTorqueFromPressurePIRegulator(gTargetPressure[motor], gActualPressure[motor], &pressurePID, motorConfig[motor].maxPressure, motorConfig[motor].maximumCurrent); // todo: adjustable MaxPressure parameter needed (ED)
+				gTargetTorque[motor] = bldc_getTargetTorqueFromPressurePIRegulator(gTargetPressure[motor], gActualPressure[motor], &pressurePID[motor], motorConfig[motor].maxPressure, motorConfig[motor].absMaxPositiveCurrent, -(int32_t)motorConfig[motor].absMaxNegativeCurrent, gActualVelocity[motor]);
 
 				// update ramp generator for velocity control to keep actual velocity as ramp velocity
 				rampGenerator[motor].targetVelocity = gActualVelocity[motor];
@@ -266,7 +319,7 @@ void bldc_processBLDC()
 							int32_t shaftTargetFlux   = (motorConfig[motor].shaftBit == 0) ? -gTargetFlux[motor] : gTargetFlux[motor];
 							TMC4671_FIELD_UPDATE(motor, TMC4671_PID_TORQUE_FLUX_TARGET, TMC4671_PID_FLUX_TARGET_MASK, TMC4671_PID_FLUX_TARGET_SHIFT, (shaftTargetFlux * 256) / (int32_t)motorConfig[motor].dualShuntFactor);
 						}
-						else if ((gMotionMode[motor] == TORQUE_MODE) || (gMotionMode[motor] == PRESSURE_MODE))
+						else if ((gMotionMode[motor] == TORQUE_MODE) || (gMotionMode[motor] == PRESSURE_MODE) || (gMotionMode[motor] == VOLUME_MODE))
 						{
 							// set new target torque (shaft bit corrected)
 							int32_t shaftTargetTorque = (motorConfig[motor].shaftBit == 0) ? -gTargetTorque[motor] : gTargetTorque[motor];
@@ -333,18 +386,15 @@ bool bldc_setTargetVolume(uint8_t motor, int32_t targetVolume)
 	  ||(motorConfig[motor].commutationMode == COMM_MODE_FOC_OPEN_LOOP))
 		return false;
 
-	if (motor == 0)
-		debug_setTestVar0(targetVolume);
-
-//	if((targetPressure >= 0) && (targetPressure <= motorConfig[motor].maxPressure))
-//	{
+//	if((targetPressure >= 0) && (targetPressure <= motorConfig[motor].maxVolume))
+	{
 		gDesiredVolume[motor] = targetVolume;
-//
-//		// switch to velocity mode
-//		bldc_switchToRegulationMode(motor, PRESSURE_MODE);
+
+		// switch to volume mode
+		bldc_switchToRegulationMode(motor, VOLUME_MODE);
 		return true;
-//	}
-//	return false;
+	}
+	return false;
 }
 
 
@@ -480,12 +530,12 @@ void bldc_updateMotorPolePairs(uint8_t motor, uint8_t motorPolePairs)
 
 uint16_t bldc_getMaxMotorCurrent(uint8_t motor)
 {
-	return motorConfig[motor].maximumCurrent;
+	return motorConfig[motor].absMaxPositiveCurrent;
 }
 
 void bldc_updateMaxMotorCurrent(uint8_t motor, uint16_t maxCurrent)
 {
-	motorConfig[motor].maximumCurrent = maxCurrent;
+	motorConfig[motor].absMaxPositiveCurrent = maxCurrent;
 	tmc4671_setTorqueFluxLimit_mA(motor, motorConfig[motor].dualShuntFactor, maxCurrent);
 }
 
@@ -634,13 +684,17 @@ bool bldc_setRampEnabled(uint8_t motor, int32_t enableRamp)
 
 void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode)
 {
-	flags_clearStatusFlag(motor, STOP_MODE | PRESSURE_MODE | TORQUE_MODE | VELOCITY_MODE | POSITION_END);
+	flags_clearStatusFlag(motor, STOP_MODE | TORQUE_MODE | VELOCITY_MODE | PRESSURE_MODE | VOLUME_MODE | POSITION_END);
 
 	switch (mode)
 	{
-		case PRESSURE_MODE:
-			flags_setStatusFlag(motor, PRESSURE_MODE);
-			gMotionMode[motor] = PRESSURE_MODE;
+		case STOP_MODE:
+			flags_setStatusFlag(motor, STOP_MODE);
+			gMotionMode[motor] = STOP_MODE;
+			break;
+		case TORQUE_MODE:
+			flags_setStatusFlag(motor, TORQUE_MODE);
+			gMotionMode[motor] = TORQUE_MODE;
 			tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
 			break;
 		case VELOCITY_MODE:
@@ -648,14 +702,15 @@ void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode)
 			gMotionMode[motor] = VELOCITY_MODE;
 			tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_VELOCITY);
 			break;
-		case TORQUE_MODE:
-			flags_setStatusFlag(motor, TORQUE_MODE);
-			gMotionMode[motor] = TORQUE_MODE;
+		case PRESSURE_MODE:
+			flags_setStatusFlag(motor, PRESSURE_MODE);
+			gMotionMode[motor] = PRESSURE_MODE;
 			tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
 			break;
-		case STOP_MODE:
-			flags_setStatusFlag(motor, STOP_MODE);
-			gMotionMode[motor] = STOP_MODE;
+		case VOLUME_MODE:
+			flags_setStatusFlag(motor, VOLUME_MODE);
+			gMotionMode[motor] = VOLUME_MODE;
+			tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
 			break;
 	}
 }
@@ -710,6 +765,8 @@ void bldc_checkCommutationMode(uint8_t motor)
 				else if (flags_isStatusFlagSet(motor, TORQUE_MODE))
 					tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
 				else if (flags_isStatusFlagSet(motor, PRESSURE_MODE))
+					tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
+				else if (flags_isStatusFlagSet(motor, VOLUME_MODE))
 					tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_TORQUE);
 				else	// velocity mode
 					tmc4671_switchToMotionMode(motor, TMC4671_MOTION_MODE_VELOCITY);

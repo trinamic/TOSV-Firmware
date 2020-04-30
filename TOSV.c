@@ -83,11 +83,11 @@ void tosv_process_pressure_control(TOSV_Config *config)
 			break;
 		case TOSV_STATE_STARTUP:
 			bldc_setTargetPressure(0, 0 + (config->pPEEP*config->timer)/config->tStartup);
+			bldc_resetVolumeIntegration();
 			if (config->timer >= config->tStartup)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
-				bldc_resetVolumeIntegration();
 			}
 			break;
 		case TOSV_STATE_INHALATION_RISE:
@@ -143,6 +143,7 @@ void tosv_process_volume_control(TOSV_Config *config)
 			break;
 		case TOSV_STATE_STARTUP:
 			bldc_setTargetVolume(0, 0);
+			bldc_resetVolumeIntegration();
 			if (config->timer >= config->tStartup)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
@@ -166,8 +167,7 @@ void tosv_process_volume_control(TOSV_Config *config)
 			}
 			break;
 		case TOSV_STATE_EXHALATION_FALL:
-			//bldc_setTargetPressure(0, config->pPEEP + ((config->pLIMIT-config->pPEEP)*(config->tExhalationFall-config->timer))/config->tExhalationFall);
-			bldc_setTargetVolume(0, 0);
+			bldc_setTargetVolume(0, (config->volumeMax)*(config->tExhalationFall-config->timer)/config->tExhalationFall);
 			if (config->timer >= config->tExhalationFall)
 			{
 				config->actualState = TOSV_STATE_EXHALATION_PAUSE;
@@ -175,12 +175,12 @@ void tosv_process_volume_control(TOSV_Config *config)
 			}
 			break;
 		case TOSV_STATE_EXHALATION_PAUSE:
-			//bldc_setTargetPressure(0, config->pPEEP);
 			bldc_setTargetVolume(0, 0);
 			if (config->timer >= config->tExhalationPause)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
+				bldc_resetVolumeIntegration();
 			}
 			break;
 	}

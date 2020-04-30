@@ -478,11 +478,11 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_GAP) {
 					*value = bldc_getMaxMotorCurrent(motor);
 				} else if (command == TMCL_STAP) {
-					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maximumCurrent-(u32)&motorConfig[motor],
-							(u8 *)&motorConfig[motor].maximumCurrent, sizeof(motorConfig[motor].maximumCurrent));
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].absMaxPositiveCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].absMaxPositiveCurrent, sizeof(motorConfig[motor].absMaxPositiveCurrent));
 				} else if (command == TMCL_RSAP) {
-					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].maximumCurrent-(u32)&motorConfig[motor],
-							(u8 *)&motorConfig[motor].maximumCurrent, sizeof(motorConfig[motor].maximumCurrent));
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].absMaxPositiveCurrent-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].absMaxPositiveCurrent, sizeof(motorConfig[motor].absMaxPositiveCurrent));
 				}
 				break;
 			case 12: // open loop current
@@ -824,6 +824,11 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 			case 44: // pressure I-Sum
 				if (command == TMCL_GAP) {
 					*value = bldc_getPressureErrorSum(motor);
+				}
+				break;
+			case 45: // volume I-Sum
+				if (command == TMCL_GAP) {
+					*value = bldc_getVolumeErrorSum(motor);
 				}
 				break;
 

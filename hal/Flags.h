@@ -26,7 +26,7 @@
 	#define PRESSURE_MODE           0x00000400	// 10
 	#define TORQUE_MODE				0x00000800	// 11
 
-	#define EMERGENCYSTOP           0x00001000	// 12
+	#define VOLUME_MODE				0x00001000	// 12
 	#define FREERUNNING             0x00002000	// 13
 	#define POSITION_END            0x00004000	// 14
 	#define MODULE_INITIALIZED		0x00008000	// 15

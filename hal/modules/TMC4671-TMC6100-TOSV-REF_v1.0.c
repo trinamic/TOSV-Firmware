@@ -12,7 +12,7 @@
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
 // general module settings
-const char *VersionString="0020V103";
+const char *VersionString="0020V104";
 
 // ADC configuration
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001244C)
@@ -34,7 +34,8 @@ void tmcm_initMotorConfig()
 {
 	// firmware default values
 
-	motorConfig[0].maximumCurrent 			= 3000;
+	motorConfig[0].absMaxPositiveCurrent 	= 3000;
+	motorConfig[0].absMaxNegativeCurrent	= 800;
 	motorConfig[0].maxVelocity 				= 80000;
 	motorConfig[0].acceleration				= 20000;
 	motorConfig[0].maxPressure				= 50000;
@@ -52,7 +53,6 @@ void tmcm_initMotorConfig()
 	motorConfig[0].hallPhiEOffset			= 0;
 
 	motorConfig[0].dualShuntFactor			= 135;
-
 	motorConfig[0].shaftBit					= 1;
 
 	motorConfig[0].pidTorque_P_param		= 300;
@@ -60,11 +60,11 @@ void tmcm_initMotorConfig()
 	motorConfig[0].pidVelocity_P_param		= 500;
 	motorConfig[0].pidVelocity_I_param		= 100;
 
-	motorConfig[0].pidPressure_P_param		= 3000;
+	motorConfig[0].pidPressure_P_param		= 1000;
 	motorConfig[0].pidPressure_I_param		= 3000;
 
-	motorConfig[0].pidVolume_P_param		= 3000;
-	motorConfig[0].pidVolume_I_param		= 3000;
+	motorConfig[0].pidVolume_P_param		= 2000;
+	motorConfig[0].pidVolume_I_param		= 2000;
 
 	motorConfig[0].pwm_freq 				= 100000;
 
@@ -75,6 +75,7 @@ void tmcm_initMotorConfig()
 	motorConfig[0].tExhalationPause			= 1500;
 	motorConfig[0].pLIMIT					= 5000;
 	motorConfig[0].pPEEP					= 1500;
+	motorConfig[0].volumeMax				= 150;		// todo: add AP in TMCL.c
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);
@@ -101,6 +102,7 @@ void tmcm_updateConfig()
 	tosvConfig[0].tExhalationPause 	= motorConfig[0].tExhalationPause;
 	tosvConfig[0].pLIMIT 			= motorConfig[0].pLIMIT;
 	tosvConfig[0].pPEEP 			= motorConfig[0].pPEEP;
+	tosvConfig[0].volumeMax         = motorConfig[0].volumeMax;
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control
@@ -139,7 +141,7 @@ void tmcm_updateConfig()
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_OPENLOOP_ACCELERATION, motorConfig[0].acceleration);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PIDOUT_UQ_UD_LIMITS, 0x7FFF);
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_PID_TORQUE_FLUX_TARGET_DDT_LIMITS, 0x7FFF);
-	tmc4671_setTorqueFluxLimit_mA(DEFAULT_MC, motorConfig[0].dualShuntFactor, motorConfig[0].maximumCurrent);
+	tmc4671_setTorqueFluxLimit_mA(DEFAULT_MC, motorConfig[0].dualShuntFactor, motorConfig[0].absMaxPositiveCurrent);
 
 	// reset target values
 	tmc4671_writeInt(DEFAULT_MC, TMC4671_UQ_UD_EXT, 0);

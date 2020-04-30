@@ -67,6 +67,7 @@
 	bool bldc_setTargetVolume(uint8_t motor, int32_t targetVolume);
 	int32 bldc_getTargetVolume(uint8_t motor);
 	int32_t bldc_getActualVolume(uint8_t motor);
+	int32_t bldc_getVolumeErrorSum(uint8_t motor);
 
 	// ===== pi controller mode settings =====
 	void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode);

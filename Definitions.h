@@ -31,7 +31,8 @@
 		uint16_t adc_I0_offset;
 		uint16_t adc_I1_offset;
 		uint16_t dualShuntFactor;		// u8.u8
-		uint16_t maximumCurrent;
+		uint16_t  absMaxPositiveCurrent;
+		uint16_t  absMaxNegativeCurrent;
 
 		uint32_t openLoopCurrent;
 		uint32_t pwm_freq;
@@ -71,6 +72,7 @@
 		uint16_t tExhalationPause;
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
+		uint32_t volumeMax;
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;
