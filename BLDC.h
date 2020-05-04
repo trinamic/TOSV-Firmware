@@ -18,9 +18,6 @@
 	// ===== general info =====
 	int16_t bldc_getSupplyVoltage();
 	int16_t bldc_getMotorTemperature();
-	int32_t bldc_getFlowValue();
-	void bldc_zeroFlow();
-	void bldc_resetVolumeIntegration();
 
 	// ===== ADC offset configuration =====
 	uint16_t bldc_getAdcI0Offset(uint8_t motor);

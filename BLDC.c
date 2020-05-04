@@ -17,11 +17,6 @@
 	// general information
 	int16_t gActualMotorTemperature = 0;				// actual motor temperature
 	int16_t	gActualSupplyVoltage = 0;					// actual supply voltage
-	int32_t gActualFlowValue = 0;
-	int32_t gActualFlowValuePT1 = 0;
-	int64_t gActualFlowValueAccu = 0;
-	int32_t gFlowOffset = 0;
-	int64_t gFlowSum = 0;
 
 	// torque regulation
 	int64_t akkuActualTorqueFlux[NUMBER_OF_MOTORS];
@@ -53,14 +48,9 @@
 	// motion mode
 	uint32_t gMotionMode[NUMBER_OF_MOTORS];
 
-	// don't crash the system if pressure sensor for flow measurement is not present
-	bool gIsFlowSensorPresent = false;
-
 	// general information
 	void bldc_checkSupplyVoltage(uint8_t motor);
 	void bldc_checkMotorTemperature();
-	void bldc_updateFlowSensor();
-	void bldc_updateVolume(uint8_t motor);
 
 
 	// === implementation ===
@@ -101,14 +91,6 @@ void bldc_init()
 		flags_init(i);
 		flags_setStatusFlag(i, STOP_MODE);
 	}
-
-	// try writing to flow sensor to check its presence
-	uint8_t writeData[] = {0x30};
-
-	uint8_t isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
-
-	// if not, don't read out the flow sensor cyclically
-	gIsFlowSensorPresent = (bool)isI2cWriteSuccessful;
 
 }
 
@@ -208,8 +190,8 @@ void bldc_processBLDC()
 
 			bldc_checkSupplyVoltage(motor);
 			bldc_checkMotorTemperature();
-			bldc_updateFlowSensor();
-			bldc_updateVolume(motor);
+			tosv_updateFlowSensor();
+			gActualVolume[motor] = tosv_updateVolume(motor);
 			bldc_checkCommutationMode(motor);
 
 			// always read actual velocity with shaft bit correction
@@ -370,11 +352,6 @@ int16_t bldc_getMotorTemperature()
 	return gActualMotorTemperature;
 }
 
-int32_t bldc_getFlowValue()
-{
-	return gActualFlowValuePT1;
-}
-
 int32 bldc_getTargetVolume(uint8_t motor)
 {
 	return gDesiredVolume[motor];
@@ -403,16 +380,6 @@ int32_t bldc_getActualVolume(uint8_t motor)
 	return gActualVolume[motor];
 }
 
-void bldc_zeroFlow()
-{
-	gFlowOffset = gActualFlowValue;
-}
-
-void bldc_resetVolumeIntegration()
-{
-	gFlowSum = 0;
-}
-
 void bldc_checkMotorTemperature()
 {
 	float vTherm = tmcm_getModuleSpecificADCValue(ADC_MOT_TEMP)*3.3 / 4095.0;
@@ -435,57 +402,6 @@ void bldc_checkMotorTemperature()
 		{
 			flags_clearStatusFlag(motor, OVERTEMPERATURE);
 		}
-	}
-}
-
-/* Read out SM9333 I2C pressure sensor value and calculate flow value from it.
- *
- * In the first step the address (0x30) to be read from is send to the sensor via write.
- * Then the pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read.
- * For now the status word is not processed in any way.
- *
- * The SM9333 comprises also a temperature sensor for temperature compensation if necessary.
- *
- * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
- *
- * We constantly filled a 120 liter garbage bag for rough calibration. It took 2 minutes until
- * filled with air and we read an sensor count of 32000 during filling, thus we
- * approximate 1 count to 2 ml/min.
- *
- * Please beware that this is not very accurate!
- */
-void bldc_updateFlowSensor()
-{
-	if (gIsFlowSensorPresent)
-	{
-		uint8_t writeData[] = {0x30};
-		uint16_t readData[2];
-		uint8_t isI2cWriteSuccessful;
-
-		isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
-
-		if (isI2cWriteSuccessful)
-		{
-			I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8);
-
-			int16_t pressureSensorCount = readData[0];
-			gActualFlowValue = (int32_t)pressureSensorCount * 2;
-			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gActualFlowValue-gFlowOffset), gActualFlowValuePT1, 5, 8);
-			//uint16_t sensorStatus = readData[1]; // unused - see description above
-		}
-	}
-}
-
-/* Volume is given in ml.
- *
- * As flow is ml/min and cycle time is 1 ms we need to divide the sum by 60000 (min -> s -> ms)
- */
-void bldc_updateVolume(uint8_t motor)
-{
-	if (gIsFlowSensorPresent)
-	{
-		gFlowSum += (gActualFlowValue-gFlowOffset);
-		gActualVolume[motor] = gFlowSum / 60000;
 	}
 }
 

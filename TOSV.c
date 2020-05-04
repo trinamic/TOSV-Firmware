@@ -8,7 +8,18 @@
 #include "TOSV.h"
 #include "BLDC.h"
 
+// private variables
+
+int32_t gActualFlowValue = 0;
+int32_t gActualFlowValuePT1 = 0;
+int64_t gActualFlowValueAccu = 0;
+int32_t gFlowOffset = 0;
+int64_t gFlowSum = 0;
+
+bool gIsFlowSensorPresent = false; // don't crash the system if pressure sensor for flow measurement is not present
+
 // private function declarations
+
 void tosv_process_pressure_control(TOSV_Config *config);
 void tosv_process_volume_control(TOSV_Config *config);
 
@@ -26,6 +37,15 @@ void tosv_init(TOSV_Config *config)
 	config->pLIMIT				= 20000;
 	config->pPEEP 				= 2000;
 	config->mode				= TOSV_MODE_PRESSURE_CONTROL;
+
+
+	// try writing to flow sensor to check its presence
+	uint8_t writeData[] = {0x30};
+
+	uint8_t isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
+
+	// if not, don't read out the flow sensor cyclically
+	gIsFlowSensorPresent = (bool)isI2cWriteSuccessful;
 }
 
 void tosv_enableVentilator(TOSV_Config *config, bool enable)
@@ -36,7 +56,7 @@ void tosv_enableVentilator(TOSV_Config *config, bool enable)
 		if (config->actualState == TOSV_STATE_STOPPED)
 		{
 			config->actualState = TOSV_STATE_STARTUP;
-			bldc_zeroFlow();
+			tosv_zeroFlow();
 		}
 	} else {
 		config->actualState = TOSV_STATE_STOPPED;
@@ -64,6 +84,76 @@ void tosv_process(TOSV_Config *config)
 	}
 }
 
+int32_t tosv_getFlowValue()
+{
+	return gActualFlowValuePT1;
+}
+
+
+void tosv_zeroFlow()
+{
+	gFlowOffset = gActualFlowValue;
+}
+
+void tosv_resetVolumeIntegration()
+{
+	gFlowSum = 0;
+}
+
+/* Read out SM9333 I2C pressure sensor value and calculate flow value from it.
+ *
+ * In the first step the address (0x30) to be read from is send to the sensor via write.
+ * Then the pressure sensor value (0x30) and sync'ed status word (0x32) is retrieved via read.
+ * For now the status word is not processed in any way.
+ *
+ * The SM9333 comprises also a temperature sensor for temperature compensation if necessary.
+ *
+ * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
+ *
+ * We constantly filled a 120 liter garbage bag for rough calibration. It took 2 minutes until
+ * filled with air and we read an sensor count of 32000 during filling, thus we
+ * approximate 1 count to 2 ml/min.
+ *
+ * Please beware that this is not very accurate!
+ */
+void tosv_updateFlowSensor()
+{
+	if (gIsFlowSensorPresent)
+	{
+		uint8_t writeData[] = {0x30};
+		uint16_t readData[2];
+		uint8_t isI2cWriteSuccessful;
+
+		isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
+
+		if (isI2cWriteSuccessful)
+		{
+			I2C_Master_BufferRead(I2C1, (uint8_t*)readData, sizeof(readData), 0xD8);
+
+			int16_t pressureSensorCount = readData[0];
+			gActualFlowValue = (int32_t)pressureSensorCount * 2;
+			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gActualFlowValue-gFlowOffset), gActualFlowValuePT1, 5, 8);
+			//uint16_t sensorStatus = readData[1]; // unused - see description above
+		}
+	}
+}
+
+/* Volume is given in ml.
+ *
+ * As flow is ml/min and cycle time is 1 ms we need to divide the sum by 60000 (min -> s -> ms)
+ */
+int32_t tosv_updateVolume(uint8_t motor)
+{
+	if (gIsFlowSensorPresent)
+	{
+		gFlowSum += (gActualFlowValue-gFlowOffset);
+		return gFlowSum / 60000;
+	}
+	else
+	{
+		return 0;
+	}
+}
 
 // private function implementations
 
@@ -79,11 +169,11 @@ void tosv_process_pressure_control(TOSV_Config *config)
 		case TOSV_STATE_STOPPED:
 			// reset timer
 			config->timer = 0;
-			bldc_resetVolumeIntegration();
+			tosv_resetVolumeIntegration();
 			break;
 		case TOSV_STATE_STARTUP:
 			bldc_setTargetPressure(0, 0 + (config->pPEEP*config->timer)/config->tStartup);
-			bldc_resetVolumeIntegration();
+			tosv_resetVolumeIntegration();
 			if (config->timer >= config->tStartup)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
@@ -120,7 +210,7 @@ void tosv_process_pressure_control(TOSV_Config *config)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
-				bldc_resetVolumeIntegration();
+				tosv_resetVolumeIntegration();
 			}
 			break;
 	}
@@ -139,11 +229,11 @@ void tosv_process_volume_control(TOSV_Config *config)
 		case TOSV_STATE_STOPPED:
 			// reset timer
 			config->timer = 0;
-			bldc_resetVolumeIntegration();
+			tosv_resetVolumeIntegration();
 			break;
 		case TOSV_STATE_STARTUP:
 			bldc_setTargetVolume(0, 0);
-			bldc_resetVolumeIntegration();
+			tosv_resetVolumeIntegration();
 			if (config->timer >= config->tStartup)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
@@ -180,7 +270,7 @@ void tosv_process_volume_control(TOSV_Config *config)
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
-				bldc_resetVolumeIntegration();
+				tosv_resetVolumeIntegration();
 			}
 			break;
 	}

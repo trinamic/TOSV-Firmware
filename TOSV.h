@@ -43,4 +43,10 @@
 	void tosv_enableVentilator(TOSV_Config *config, bool enable);
 	bool tosv_isVentilatorEnabled(TOSV_Config *config);
 
+	void tosv_zeroFlow();
+	void tosv_resetVolumeIntegration();
+	int32_t tosv_getFlowValue();
+	void tosv_updateFlowSensor();
+	int32_t tosv_updateVolume(uint8_t motor);
+
 #endif

@@ -1191,13 +1191,13 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 			case 110: // actual flow
 				if (command == TMCL_GAP)
 				{
-					*value = bldc_getFlowValue();
+					*value = tosv_getFlowValue();
 				}
 				break;
 			case 111: // zero flow
 				if (command == TMCL_SAP)
 				{
-					bldc_zeroFlow();
+					tosv_zeroFlow();
 				}
 				break;
 			case 112:
