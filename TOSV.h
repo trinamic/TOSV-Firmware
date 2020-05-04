@@ -39,6 +39,7 @@
 	#define TOSV_STATE_EXHALATION_PAUSE	    5
 
 	void tosv_init(TOSV_Config *config);
+	void tosv_initFlowSensor();
 	void tosv_process(TOSV_Config *config);
 	void tosv_enableVentilator(TOSV_Config *config, bool enable);
 	bool tosv_isVentilatorEnabled(TOSV_Config *config);

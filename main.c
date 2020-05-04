@@ -13,6 +13,7 @@
 #include "hal/comm/I2C.h"
 #include "BLDC.h"
 #include "TMCL.h"
+#include "TOSV.h"
 
 #if defined(USE_UART_INTERFACE)
 	#include "hal/comm/UART.h"
@@ -57,6 +58,7 @@ int main(void)
 
 	// initialize ICs
 	tmcm_updateConfig();
+	tosv_initFlowSensor();
 
 	for(;;)
 	{

@@ -37,11 +37,12 @@ void tosv_init(TOSV_Config *config)
 	config->pLIMIT				= 20000;
 	config->pPEEP 				= 2000;
 	config->mode				= TOSV_MODE_PRESSURE_CONTROL;
+}
 
-
+void tosv_initFlowSensor()
+{
 	// try writing to flow sensor to check its presence
 	uint8_t writeData[] = {0x30};
-
 	uint8_t isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
 
 	// if not, don't read out the flow sensor cyclically
