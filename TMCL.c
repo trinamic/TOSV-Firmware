@@ -1216,9 +1216,24 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				}
 				break;
 			case 114: // max volume
-				if (command == TMCL_GAP)
+				if (command == TMCL_SAP)
 				{
-					// ...
+					if ((*value >= 0) && (*value <= MAX_VOLUME))
+						tosvConfig[motor].volumeMax = *value;
+					else
+						errors = REPLY_INVALID_VALUE;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].volumeMax;
+				} else if (command == TMCL_STAP) {
+					motorConfig[0].volumeMax = tosvConfig[motor].volumeMax;
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].volumeMax-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].volumeMax, sizeof(motorConfig[motor].volumeMax));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].volumeMax-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].volumeMax, sizeof(motorConfig[motor].volumeMax));
+					tosvConfig[motor].volumeMax = motorConfig[motor].volumeMax;
 				}
 				break;
 

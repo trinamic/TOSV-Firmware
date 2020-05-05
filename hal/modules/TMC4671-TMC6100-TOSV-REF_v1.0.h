@@ -24,6 +24,7 @@
 
 	#define MAX_CURRENT 				(int32_t)6000		// RMS current
 	#define MAX_PRESSURE				(int32_t)70000
+	#define MAX_VOLUME				    (int32_t)70000
 
 	#define TMCM_USE_IIC_INTERFACE
 	#define I2C_PRESSURE_SENSOR_SM9333
@@ -48,9 +49,9 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	5
+	#define SW_VERSION_LOW  	6
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x69	// 105
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6A	// 106
 
 	#define WEASEL_SPI2_ON_PB13_PB14_PB15
 	#define DRAGON_SPI2_ON_PB13_PB14_PB15
