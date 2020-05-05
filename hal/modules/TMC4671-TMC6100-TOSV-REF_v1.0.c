@@ -12,7 +12,7 @@
 #if DEVICE==TMC4671_TMC6100_TOSV_REF_V10
 
 // general module settings
-const char *VersionString="0020V104";
+const char *VersionString="0020V107";
 
 // ADC configuration
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001244C)
@@ -65,6 +65,10 @@ void tmcm_initMotorConfig()
 
 	motorConfig[0].pidVolume_P_param		= 2000;
 	motorConfig[0].pidVolume_I_param		= 2000;
+
+	motorConfig[0].brakeChopperEnabled		= 0;
+	motorConfig[0].brakeChopperHysteresis	= 5;
+	motorConfig[0].brakeChopperVoltage		= 260;
 
 	motorConfig[0].pwm_freq 				= 100000;
 

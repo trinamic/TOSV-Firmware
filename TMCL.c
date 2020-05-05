@@ -990,15 +990,50 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 							(u8 *)&motorConfig[motor].pidVolume_I_param, sizeof(motorConfig[motor].pidVolume_I_param));
 				}
 				break;
-			// ===== brake chopper settings  ===== (placeholder (ED))
-//			case 60: // brake chopper enable
-//				break;
-//			case 61: // brake chopper voltage
-//				break;
-//			case 62: // brake chopper hysteresis
-//				break;
-//			case 63: // brake chopper active
-//				break;
+
+			// ===== brake chopper settings  =====
+			case 95: // enable brake chopper
+				if (command == TMCL_SAP) {
+					motorConfig[motor].brakeChopperEnabled = (*value) ? 1:0;
+					bldc_updateBrakeChopperConfig(motor);
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].brakeChopperEnabled;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperEnabled-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperEnabled, sizeof(motorConfig[motor].brakeChopperEnabled));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperEnabled-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperEnabled, sizeof(motorConfig[motor].brakeChopperEnabled));
+				}
+				break;
+			case 96: // brake chopper voltage limit
+				if (command == TMCL_SAP) {
+					motorConfig[motor].brakeChopperVoltage = *value;
+					bldc_updateBrakeChopperConfig(motor);
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].brakeChopperVoltage;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperVoltage-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperVoltage, sizeof(motorConfig[motor].brakeChopperVoltage));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperVoltage-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperVoltage, sizeof(motorConfig[motor].brakeChopperVoltage));
+				}
+				break;
+			case 97: // brake chopper hysteresis
+				if (command == TMCL_SAP) {
+					motorConfig[motor].brakeChopperHysteresis = *value;
+					bldc_updateBrakeChopperConfig(motor);
+				} else if (command == TMCL_GAP) {
+					*value = motorConfig[motor].brakeChopperHysteresis;
+				} else if (command == TMCL_STAP) {
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperHysteresis-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperHysteresis, sizeof(motorConfig[motor].brakeChopperHysteresis));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].brakeChopperHysteresis-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].brakeChopperHysteresis, sizeof(motorConfig[motor].brakeChopperHysteresis));
+				}
+				break;
 
 			// ===== tosv settings =====
 			case 99: // TOSV mode

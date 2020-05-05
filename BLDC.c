@@ -731,6 +731,22 @@ bool bldc_setTargetPressure(uint8_t motor, int32_t targetPressure)
 	return false;
 }
 
+void bldc_updateBrakeChopperConfig(uint8_t motor)
+{
+	if(motorConfig[motor].brakeChopperEnabled)
+	{
+		// high limit
+		tmc4671_writeRegister16BitValue(motor, TMC4671_ADC_VM_LIMITS, BIT_16_TO_31, (4095 * motorConfig[motor].brakeChopperVoltage) / VOLTAGE_FAKTOR + VOLTAGE_OFFSET);
+
+		// low limit
+		tmc4671_writeRegister16BitValue(motor, TMC4671_ADC_VM_LIMITS, BIT_0_TO_15, (4095 * (motorConfig[motor].brakeChopperVoltage - motorConfig[motor].brakeChopperHysteresis) / VOLTAGE_FAKTOR) + VOLTAGE_OFFSET);
+	}
+	else
+	{
+		tmc4671_writeInt(motor, TMC4671_ADC_VM_LIMITS, 0xFFFFFFFF);
+	}
+}
+
 int32_t bldc_getActualPressure(uint8_t motor) // unit: Pa
 {
 	return actualPressurePT1[motor];

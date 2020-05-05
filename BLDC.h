@@ -72,6 +72,9 @@
 	// ===== pi controller mode settings =====
 	void bldc_switchToRegulationMode(uint8_t motor, uint32_t mode);
 
+	// ===== brake chopper settings =====
+	void bldc_updateBrakeChopperConfig(uint8_t motor);
+
 	// ===== general motor control mode handling =====
 	void bldc_checkCommutationMode(uint8_t motor);
 

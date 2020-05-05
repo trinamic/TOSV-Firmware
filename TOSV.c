@@ -145,6 +145,8 @@ void tosv_updateFlowSensor()
  */
 int32_t tosv_updateVolume(uint8_t motor)
 {
+	UNUSED(motor);
+
 	if (gIsFlowSensorPresent)
 	{
 		gFlowSum += (gActualFlowValue-gFlowOffset);

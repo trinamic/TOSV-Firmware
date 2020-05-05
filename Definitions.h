@@ -64,6 +64,11 @@
 
 		int16_t hallPhiEOffset;
 
+		// brake chopper settings
+		uint8_t brakeChopperEnabled;
+		uint8_t brakeChopperHysteresis;
+		uint16_t brakeChopperVoltage;
+
 		// tosv settings
 		uint16_t tStartup;
 		uint16_t tInhalationRise;
