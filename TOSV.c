@@ -23,6 +23,8 @@ bool gIsFlowSensorPresent = false; // don't crash the system if pressure sensor 
 void tosv_process_pressure_control(TOSV_Config *config);
 void tosv_process_volume_control(TOSV_Config *config);
 
+bool tosv_hasAsbTrigger(TOSV_Config *config);
+
 // public function implementations
 
 void tosv_init(TOSV_Config *config)
@@ -112,7 +114,7 @@ void tosv_resetVolumeIntegration()
  * https://www.si-micro.com/fileadmin/00_smi_relaunch/products/digital/datasheet/SM933X_datasheet.pdf
  *
  * We constantly filled a 120 liter garbage bag for rough calibration. It took 2 minutes until
- * filled with air and we read an sensor count of 32000 during filling, thus we
+ * filled with air and we read a sensor count of 32000 during filling, thus we
  * approximate 1 count to 2 ml/min.
  *
  * Please beware that this is not very accurate!
@@ -209,7 +211,7 @@ void tosv_process_pressure_control(TOSV_Config *config)
 			break;
 		case TOSV_STATE_EXHALATION_PAUSE:
 			bldc_setTargetPressure(0, config->pPEEP);
-			if (config->timer >= config->tExhalationPause)
+			if ((config->timer >= config->tExhalationPause) || (tosv_hasAsbTrigger(config)))
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
@@ -276,5 +278,18 @@ void tosv_process_volume_control(TOSV_Config *config)
 				tosv_resetVolumeIntegration();
 			}
 			break;
+	}
+}
+
+
+bool tosv_hasAsbTrigger(TOSV_Config *config)
+{
+	if (config->asbEnabled)
+	{
+		return (gActualFlowValue > config->asbThreshold);
+	}
+	else
+	{
+		return false;
 	}
 }

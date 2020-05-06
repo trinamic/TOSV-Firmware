@@ -79,7 +79,8 @@ void tmcm_initMotorConfig()
 	motorConfig[0].tExhalationPause			= 1500;
 	motorConfig[0].pLIMIT					= 5000;
 	motorConfig[0].pPEEP					= 1500;
-	motorConfig[0].volumeMax				= 150;		// todo: add AP in TMCL.c
+	motorConfig[0].volumeMax				= 150;
+
 
 	// init ramp generator
 	tmc_linearRamp_init(&rampGenerator[0]);

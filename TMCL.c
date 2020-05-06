@@ -1271,6 +1271,29 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					tosvConfig[motor].volumeMax = motorConfig[motor].volumeMax;
 				}
 				break;
+			case 120: // ASB enable
+				if (command == TMCL_SAP)
+				{
+					if (*value == 0)
+						tosvConfig[motor].asbEnabled = false;
+					else
+						tosvConfig[motor].asbEnabled = true;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].asbEnabled;
+				}
+				break;
+			case 121: // ASB threshold
+				if (command == TMCL_SAP)
+				{
+					tosvConfig[motor].asbThreshold = *value;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].asbThreshold;
+				}
+				break;
 
 			// ===== debugging =====
 
