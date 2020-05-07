@@ -1275,13 +1275,21 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				if (command == TMCL_SAP)
 				{
 					if (*value == 0)
-						tosvConfig[motor].asbEnabled = false;
+						tosvConfig[motor].asbEnable = false;
 					else
-						tosvConfig[motor].asbEnabled = true;
+						tosvConfig[motor].asbEnable = true;
 				}
 				else if (command == TMCL_GAP)
 				{
-					*value = tosvConfig[motor].asbEnabled;
+					*value = tosvConfig[motor].asbEnable;
+				} else if (command == TMCL_STAP) {
+					motorConfig[0].asbEnable = tosvConfig[motor].asbEnable;
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbEnable-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbEnable, sizeof(motorConfig[motor].asbEnable));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbEnable-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbEnable, sizeof(motorConfig[motor].asbEnable));
+					tosvConfig[motor].asbEnable = motorConfig[motor].asbEnable;
 				}
 				break;
 			case 121: // ASB threshold
@@ -1292,6 +1300,14 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				else if (command == TMCL_GAP)
 				{
 					*value = tosvConfig[motor].asbThreshold;
+				} else if (command == TMCL_STAP) {
+					motorConfig[0].asbThreshold = tosvConfig[motor].asbThreshold;
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbThreshold-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbThreshold, sizeof(motorConfig[motor].asbThreshold));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbThreshold-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbThreshold, sizeof(motorConfig[motor].asbThreshold));
+					tosvConfig[motor].asbEnable = motorConfig[motor].asbThreshold;
 				}
 				break;
 

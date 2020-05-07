@@ -78,6 +78,8 @@
 		uint32_t pLIMIT;
 		uint32_t pPEEP;
 		uint32_t volumeMax;
+		bool asbEnable; // early state machine reset on spontaneous flow
+		int32_t asbThreshold;
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;

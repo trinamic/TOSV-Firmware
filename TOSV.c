@@ -283,7 +283,7 @@ void tosv_process_volume_control(TOSV_Config *config)
 
 bool tosv_hasAsbTrigger(TOSV_Config *config)
 {
-	if (config->asbEnabled)
+	if (config->asbEnable)
 	{
 		return (gActualFlowValue > config->asbThreshold);
 	}

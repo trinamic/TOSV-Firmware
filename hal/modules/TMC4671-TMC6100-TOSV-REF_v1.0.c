@@ -80,6 +80,8 @@ void tmcm_initMotorConfig()
 	motorConfig[0].pLIMIT					= 5000;
 	motorConfig[0].pPEEP					= 1500;
 	motorConfig[0].volumeMax				= 150;
+	motorConfig[0].asbEnable               = false;
+	motorConfig[0].asbThreshold             = 2000;
 
 
 	// init ramp generator
@@ -108,6 +110,8 @@ void tmcm_updateConfig()
 	tosvConfig[0].pLIMIT 			= motorConfig[0].pLIMIT;
 	tosvConfig[0].pPEEP 			= motorConfig[0].pPEEP;
 	tosvConfig[0].volumeMax         = motorConfig[0].volumeMax;
+	tosvConfig[0].asbEnable 		= motorConfig[0].asbEnable;
+	tosvConfig[0].asbThreshold      = motorConfig[0].asbThreshold;
 
 	// === configure TMC6200 ===
 	tmc6200_writeInt(DEFAULT_DRV, TMC6200_GCONF, 0);	// normal pwm control

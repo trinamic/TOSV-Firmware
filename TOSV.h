@@ -29,7 +29,7 @@
 		uint32_t pPEEP;
 		uint32_t volumeMax;
 		TOSV_Mode mode;
-		bool asbEnabled; // early state machine reset on spontaneous flow
+		bool asbEnable; // early state machine reset on spontaneous flow
 		int32_t asbThreshold;
 	} TOSV_Config;
 
