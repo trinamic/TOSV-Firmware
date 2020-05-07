@@ -124,7 +124,7 @@ void tosv_updateFlowSensor()
 	if (gIsFlowSensorPresent)
 	{
 		uint8_t writeData[] = {0x30};
-		uint16_t readData[2];
+		uint16_t readData[1];
 		uint8_t isI2cWriteSuccessful;
 
 		isI2cWriteSuccessful = I2C_Master_BufferWrite(I2C1, writeData, sizeof(writeData), 0xD8);
@@ -136,7 +136,6 @@ void tosv_updateFlowSensor()
 			int16_t pressureSensorCount = readData[0];
 			gActualFlowValue = (int32_t)pressureSensorCount * 2;
 			gActualFlowValuePT1 = tmc_filterPT1(&gActualFlowValueAccu, (gActualFlowValue-gFlowOffset), gActualFlowValuePT1, 5, 8);
-			//uint16_t sensorStatus = readData[1]; // unused - see description above
 		}
 	}
 }
