@@ -270,7 +270,7 @@ void tosv_process_volume_control(TOSV_Config *config)
 			break;
 		case TOSV_STATE_EXHALATION_PAUSE:
 			bldc_setTargetVolume(0, 0);
-			if (config->timer >= config->tExhalationPause)
+			if ((config->timer >= config->tExhalationPause) || (tosv_hasAsbTrigger(config)))
 			{
 				config->actualState = TOSV_STATE_INHALATION_RISE;
 				config->timer = 0;
