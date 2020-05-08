@@ -80,6 +80,7 @@
 		uint32_t volumeMax;
 		bool asbEnable; // early state machine reset on spontaneous flow
 		int32_t asbThreshold;
+		int32_t asbVolumeCondition;
 	} TMotorConfig;
 
 	TModuleConfig moduleConfig;

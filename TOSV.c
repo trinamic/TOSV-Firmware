@@ -13,8 +13,10 @@
 int32_t gActualFlowValue = 0;
 int32_t gActualFlowValuePT1 = 0;
 int64_t gActualFlowValueAccu = 0;
+int32_t gAcutalVolume = 0;
 int32_t gFlowOffset = 0;
 int64_t gFlowSum = 0;
+int32_t gVolumeMax = 0;
 
 bool gIsFlowSensorPresent = false; // don't crash the system if pressure sensor for flow measurement is not present
 
@@ -39,6 +41,9 @@ void tosv_init(TOSV_Config *config)
 	config->pLIMIT				= 20000;
 	config->pPEEP 				= 2000;
 	config->mode				= TOSV_MODE_PRESSURE_CONTROL;
+	config->asbEnable 			= false;
+	config->asbThreshold        = 500;
+	config->asbVolumeCondition  = 70;
 }
 
 void tosv_initFlowSensor()
@@ -101,6 +106,7 @@ void tosv_zeroFlow()
 void tosv_resetVolumeIntegration()
 {
 	gFlowSum = 0;
+	gVolumeMax = 0;
 }
 
 /* Read out SM9333 I2C pressure sensor value and calculate flow value from it.
@@ -151,7 +157,13 @@ int32_t tosv_updateVolume(uint8_t motor)
 	if (gIsFlowSensorPresent)
 	{
 		gFlowSum += (gActualFlowValue-gFlowOffset);
-		return gFlowSum / 60000;
+
+		gAcutalVolume = gFlowSum / 60000;
+
+		if (gAcutalVolume > gVolumeMax)
+			gVolumeMax = gAcutalVolume;
+
+		return gAcutalVolume;
 	}
 	else
 	{
@@ -285,7 +297,9 @@ bool tosv_hasAsbTrigger(TOSV_Config *config)
 {
 	if (config->asbEnable)
 	{
-		return (gActualFlowValue > config->asbThreshold);
+		uint32_t acutalVolumePercent = gAcutalVolume*100/gVolumeMax;
+
+		return ((gActualFlowValue > config->asbThreshold) && (acutalVolumePercent <= config->asbVolumeCondition));
 	}
 	else
 	{

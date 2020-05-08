@@ -1307,7 +1307,28 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 				} else if (command == TMCL_RSAP) {
 					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbThreshold-(u32)&motorConfig[motor],
 							(u8 *)&motorConfig[motor].asbThreshold, sizeof(motorConfig[motor].asbThreshold));
-					tosvConfig[motor].asbEnable = motorConfig[motor].asbThreshold;
+					tosvConfig[motor].asbThreshold = motorConfig[motor].asbThreshold;
+				}
+				break;
+			case 122: // ASB volume condition
+				if (command == TMCL_SAP)
+				{
+					if ((*value >= 0) && (*value) <= 100)
+						tosvConfig[motor].asbVolumeCondition = *value;
+					else
+						errors = REPLY_INVALID_VALUE;
+				}
+				else if (command == TMCL_GAP)
+				{
+					*value = tosvConfig[motor].asbVolumeCondition;
+				} else if (command == TMCL_STAP) {
+					motorConfig[0].asbVolumeCondition = tosvConfig[motor].asbVolumeCondition;
+					eeprom_writeConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbVolumeCondition-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbVolumeCondition, sizeof(motorConfig[motor].asbVolumeCondition));
+				} else if (command == TMCL_RSAP) {
+					eeprom_readConfigBlock(TMCM_ADDR_MOTOR_CONFIG+motor*TMCM_MOTOR_CONFIG_SIZE+(u32)&motorConfig[motor].asbVolumeCondition-(u32)&motorConfig[motor],
+							(u8 *)&motorConfig[motor].asbVolumeCondition, sizeof(motorConfig[motor].asbVolumeCondition));
+					tosvConfig[motor].asbVolumeCondition = motorConfig[motor].asbVolumeCondition;
 				}
 				break;
 

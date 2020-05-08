@@ -31,6 +31,7 @@
 		TOSV_Mode mode;
 		bool asbEnable; // early state machine reset on spontaneous flow
 		int32_t asbThreshold;
+		uint32_t asbVolumeCondition;
 	} TOSV_Config;
 
 	#define TOSV_STATE_STOPPED				0

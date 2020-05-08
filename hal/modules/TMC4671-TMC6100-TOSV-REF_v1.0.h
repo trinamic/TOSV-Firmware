@@ -49,9 +49,9 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	8
+	#define SW_VERSION_LOW  	9
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6C	// 108
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6D	// 109
 
 	#define WEASEL_SPI2_ON_PB13_PB14_PB15
 	#define DRAGON_SPI2_ON_PB13_PB14_PB15
