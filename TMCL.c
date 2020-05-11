@@ -1331,6 +1331,12 @@ uint32_t tmcl_handleAxisParameter(uint8_t motor, uint8_t command, uint8_t type, 
 					tosvConfig[motor].asbVolumeCondition = motorConfig[motor].asbVolumeCondition;
 				}
 				break;
+			case 130: // volume sensor reinit
+				if (command == TMCL_SAP)
+				{
+					tosv_reInitFlowSensor();
+				}
+				break;
 
 			// ===== debugging =====
 

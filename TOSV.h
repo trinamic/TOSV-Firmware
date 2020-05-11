@@ -50,6 +50,7 @@
 	void tosv_zeroFlow();
 	void tosv_resetVolumeIntegration();
 	int32_t tosv_getFlowValue();
+	void tosv_reInitFlowSensor();
 	void tosv_updateFlowSensor();
 	int32_t tosv_updateVolume(uint8_t motor);
 

@@ -109,6 +109,12 @@ void tosv_resetVolumeIntegration()
 	gVolumeMax = 0;
 }
 
+
+void tosv_reInitFlowSensor()
+{
+	tosv_initFlowSensor();
+}
+
 /* Read out SM9333 I2C pressure sensor value and calculate flow value from it.
  *
  * In the first step the address (0x30) to be read from is send to the sensor via write.
