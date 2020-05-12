@@ -260,7 +260,12 @@ void tmcl_processCommand()
 
   	// last command was a reset?
   	if(ResetRequested)
+  	{
+  		/* delay the reset, that the reply is send completely */
+  		uint32_t delay = systick_getTimer();
+  		while(abs(systick_getTimer()-delay) < 100){;}
   		tmcl_resetCPU(true);
+  	}
 
   	/* read next request */
 
