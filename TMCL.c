@@ -1470,7 +1470,7 @@ void tmcl_getInput()
 	switch(ActualCommand.Motor)
 	{
     	case 0: // digital_inputs
-//    		ActualReply.Value.Int32 = tmcm_getModuleSpecificIOPin(ActualCommand.Type);
+    		ActualReply.Value.Int32 = tmcm_getModuleSpecificIOPin(ActualCommand.Type);
     		break;
     	case 1: // analog_inputs
     		ActualReply.Value.Int32 = tmcm_getModuleSpecificADCValue(ActualCommand.Type);

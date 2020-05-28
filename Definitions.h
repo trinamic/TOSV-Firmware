@@ -133,6 +133,7 @@
 	// IOs
 	extern void tmcm_clearModuleSpecificIOPin(uint8_t pin);
 	extern void tmcm_setModuleSpecificIOPin(uint8_t pin);
+	extern uint8_t tmcm_getModuleSpecificIOPin(uint8_t pin);
 	extern uint8_t tmcm_getModuleSpecificIOPinStatus(uint8_t pin);
 	extern uint16_t tmcm_getModuleSpecificADCValue(uint8_t pin);
 

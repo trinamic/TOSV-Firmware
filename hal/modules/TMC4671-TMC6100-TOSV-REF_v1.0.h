@@ -49,7 +49,7 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	9
+	#define SW_VERSION_LOW  	10
 
 	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6D	// 109
 

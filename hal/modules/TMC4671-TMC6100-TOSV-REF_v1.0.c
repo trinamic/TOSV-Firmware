@@ -182,14 +182,17 @@ void tmcm_initModuleSpecificIO()
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	// outputs port A
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_15;		// CS_Weasel | CS_Dragon | RUN_LED | ERROR_LED | EN_Weasel
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_15;		// CS_Weasel | CS_Dragon | RUN_LED | ERROR_LED | EN_Weasel
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	GPIOA->BSRR = GPIO_Pin_3;						// disable CS_Weasel
+  GPIOA->BRR = GPIO_Pin_6;           // OUT_4 low
+  GPIOA->BRR = GPIO_Pin_7;           // OUT_3 low
 	GPIOA->BSRR = GPIO_Pin_8;						// disable CS_Dragon
 	GPIOA->BSRR = GPIO_Pin_9;						// disable RUN_LED
 	GPIOA->BRR = GPIO_Pin_10;						// disable ERROR_LED
+  GPIOA->BRR = GPIO_Pin_11;           // OUT_1 low
 	GPIOA->BSRR = GPIO_Pin_15;						// enable EN_Weasel
 
 	// === enable port B ===
@@ -204,11 +207,13 @@ void tmcm_initModuleSpecificIO()
 
 	// outputs port B
 	GPIO_StructInit(&GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; 		// CS_EEPROM
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_12; 		// CS_EEPROM
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	GPIOB->BSRR = GPIO_Pin_12;						// disable CS_EEPROM
+	GPIOB->BRR = GPIO_Pin_2;						// OUT_2 low
+  GPIOB->BRR = GPIO_Pin_4;            // OUT_0 low
+  GPIOB->BSRR = GPIO_Pin_12;            // disable CS_EEPROM
 
 	// === enable port C ===
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
@@ -349,6 +354,21 @@ void tmcm_clearModuleSpecificIOPin(uint8_t pin)
 		case 0:
 			GPIOA->BRR = GPIO_Pin_15; 	// EN_4671
 			break;
+    case 1:
+      GPIOB->BRR = GPIO_Pin_4;   // OUT_0
+      break;
+    case 2:
+      GPIOA->BRR = GPIO_Pin_11;   // OUT_1
+      break;
+    case 3:
+      GPIOB->BRR = GPIO_Pin_2;   // OUT_2
+      break;
+    case 4:
+      GPIOA->BRR = GPIO_Pin_7;   // OUT_3
+      break;
+    case 5:
+      GPIOA->BRR = GPIO_Pin_6;   // OUT_4
+      break;
 	}
 }
 
@@ -359,7 +379,46 @@ void tmcm_setModuleSpecificIOPin(uint8_t pin)
 		case 0:
 			GPIOA->BSRR = GPIO_Pin_15; 	// EN_4671
 			break;
+    case 1:
+      GPIOB->BSRR = GPIO_Pin_4;  // OUT_0
+      break;
+    case 2:
+      GPIOA->BSRR = GPIO_Pin_11;  // OUT_1
+      break;
+    case 3:
+      GPIOB->BSRR = GPIO_Pin_2;  // OUT_2
+      break;
+    case 4:
+      GPIOA->BSRR = GPIO_Pin_7;  // OUT_3
+      break;
+    case 5:
+      GPIOA->BSRR = GPIO_Pin_6;  // OUT_4
+      break;
 	}
+}
+
+
+uint8_t tmcm_getModuleSpecificIOPin(uint8_t pin)
+{
+  switch (pin)
+  {
+    case 0:
+      return (GPIOC->IDR & GPIO_Pin_15) ? 1:0;  // IN_0
+      break;
+    case 1:
+      return (GPIOC->IDR & GPIO_Pin_14) ? 1:0;  // IN_1
+      break;
+    case 2:
+      return (GPIOC->IDR & GPIO_Pin_13) ? 1:0;  // IN_2
+      break;
+    case 3:
+      return (GPIOA->IDR & GPIO_Pin_5) ? 1:0;   // IN_3
+      break;
+    case 4:
+      return (GPIOA->IDR & GPIO_Pin_4) ? 1:0;   // IN_4
+      break;
+  }
+  return 0;
 }
 
 uint8_t tmcm_getModuleSpecificIOPinStatus(uint8_t pin)
@@ -369,6 +428,21 @@ uint8_t tmcm_getModuleSpecificIOPinStatus(uint8_t pin)
 		case 0:
 			return (GPIOA->IDR & GPIO_Pin_15) ? 1:0;  // EN_4671
 			break;
+    case 1:
+      return (GPIOB->IDR & GPIO_Pin_4) ? 1:0;  // OUT_0
+      break;
+    case 2:
+      return (GPIOA->IDR & GPIO_Pin_11) ? 1:0;  // OUT_1
+      break;
+    case 3:
+      return (GPIOB->IDR & GPIO_Pin_2) ? 1:0;  // OUT_2
+      break;
+    case 4:
+      return (GPIOA->IDR & GPIO_Pin_7) ? 1:0;  // OUT_3
+      break;
+    case 5:
+      return (GPIOA->IDR & GPIO_Pin_6) ? 1:0;  // OUT_4
+      break;
 	}
 	return 0;
 }
