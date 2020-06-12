@@ -10,6 +10,7 @@
 #include "hal/system/SystemInfo.h"
 #include "hal/system/Debug.h"
 #include "hal/comm/Eeprom.h"
+#include "hal/comm/RS485.h"
 #include "hal/comm/SPI.h"
 #include "hal/tmcl/TMCL-Variables.h"
 #include "TOSV.h"
@@ -136,6 +137,11 @@ void tmcl_processCommand()
     static uint8_t UARTCount;
 #endif
 
+#ifdef USE_RS485_INTERFACE
+    static uint8_t RS485Cmd[9];
+    static uint8_t RS485Count;
+#endif
+
 #ifdef USE_USB_INTERFACE
     uint8_t USBCmd[9];
     uint8_t USBReply[9];
@@ -192,6 +198,59 @@ void tmcl_processCommand()
     	uart_write(ActualReply.Value.Byte[1]);
     	uart_write(ActualReply.Value.Byte[0]);
     	uart_write(Checksum);
+    }
+
+#endif
+
+#ifdef USE_RS485_INTERFACE
+
+    if(TMCLCommandState==TCS_RS485)  // reply via RS485
+    {
+    	if(TMCLReplyFormat==RF_STANDARD)
+    	{
+    		uint8_t Checksum = moduleConfig.serialHostAddress+moduleConfig.serialModuleAddress+
+    							ActualReply.Status+ActualReply.Opcode+
+								ActualReply.Value.Byte[3]+ActualReply.Value.Byte[2]+
+								ActualReply.Value.Byte[1]+ActualReply.Value.Byte[0];
+
+    		rs485_write(moduleConfig.serialHostAddress);
+    		rs485_write(moduleConfig.serialModuleAddress);
+    		rs485_write(ActualReply.Status);
+    		rs485_write(ActualReply.Opcode);
+    		rs485_write(ActualReply.Value.Byte[3]);
+    		rs485_write(ActualReply.Value.Byte[2]);
+    		rs485_write(ActualReply.Value.Byte[1]);
+    		rs485_write(ActualReply.Value.Byte[0]);
+    		rs485_write(Checksum);
+    	}
+    	else if(TMCLReplyFormat==RF_SPECIAL)
+    	{
+    		for(i=0; i<9; i++)
+    		{
+    			rs485_write(SpecialReply[i]);
+    		}
+    	}
+    }
+    else if(TMCLCommandState==TCS_RS485_ERROR)  // last command had a wrong checksum
+    {
+    	ActualReply.Opcode = 0;
+    	ActualReply.Status = REPLY_CHKERR;
+    	ActualReply.Value.Int32 = 0;
+
+    	uint8_t Checksum = moduleConfig.serialHostAddress + moduleConfig.serialModuleAddress+
+    		  	  	  	  ActualReply.Status+ActualReply.Opcode+
+						  ActualReply.Value.Byte[3] + ActualReply.Value.Byte[2]+
+						  ActualReply.Value.Byte[1] + ActualReply.Value.Byte[0];
+
+    	rs485_write(moduleConfig.serialHostAddress);
+    	rs485_write(moduleConfig.serialModuleAddress);
+    	rs485_write(ActualReply.Status);
+    	rs485_write(ActualReply.Opcode);
+    	rs485_write(ActualReply.Value.Byte[3]);
+    	rs485_write(ActualReply.Value.Byte[2]);
+    	rs485_write(ActualReply.Value.Byte[1]);
+    	rs485_write(ActualReply.Value.Byte[0]);
+    	rs485_write(Checksum);
     }
 
 #endif
@@ -306,6 +365,42 @@ void tmcl_processCommand()
     }
 #endif
 
+#ifdef USE_RS485_INTERFACE
+
+  	if(rs485_read((char *)&Byte))  // new RS485 request available?
+  	{
+  		if(rs485_checkTimeout())
+  			RS485Count=0;  // discard everything when there has been a command timeout
+
+  		RS485Cmd[RS485Count++] = Byte;
+
+  		if(RS485Count==9)  // Nine bytes have been received without timeout
+  		{
+  			RS485Count=0;
+  			systemInfo_incCommunicationLoopCounter();
+
+  			if(RS485Cmd[0] == moduleConfig.serialModuleAddress)  // is this our address?
+  			{
+  				uint8_t checksum = 0;
+  				for(i=0; i<8; i++)
+  					checksum+=RS485Cmd[i];
+
+  				if(checksum==RS485Cmd[8])  // is the checksum correct?
+  				{
+  					ActualCommand.Opcode=RS485Cmd[1];
+  					ActualCommand.Type=RS485Cmd[2];
+  					ActualCommand.Motor=RS485Cmd[3];
+  					ActualCommand.Value.Byte[3]=RS485Cmd[4];
+  					ActualCommand.Value.Byte[2]=RS485Cmd[5];
+  					ActualCommand.Value.Byte[1]=RS485Cmd[6];
+  					ActualCommand.Value.Byte[0]=RS485Cmd[7];
+  					TMCLCommandState = TCS_RS485;
+  				}
+  				else TMCLCommandState = TCS_RS485_ERROR;  //Checksum wrong
+  			}
+  		}
+    }
+#endif
 
 #ifdef USE_USB_INTERFACE
 
@@ -335,7 +430,7 @@ void tmcl_processCommand()
 #endif
 
    	// handle request after successful reading
-   	if(TMCLCommandState!=TCS_IDLE && TMCLCommandState!=TCS_UART_ERROR && TMCLCommandState!=TCS_USB_ERROR)
+   	if(TMCLCommandState!=TCS_IDLE && TMCLCommandState!=TCS_UART_ERROR && TMCLCommandState!=TCS_RS485_ERROR && TMCLCommandState!=TCS_USB_ERROR)
    		tmcl_executeActualCommand();
 }
 

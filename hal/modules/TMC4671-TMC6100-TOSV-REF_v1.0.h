@@ -34,6 +34,10 @@
 	#define USE_UART_INTERFACE
 	#define USE_USART1_ON_PB6_PB7
 
+	// ===== RS485 configuration ====
+	#define USE_RS485_INTERFACE
+	#define USE_USART3_ON_PB10_PB11
+
 	#include "../../Definitions.h"
 	#include "../HAL_Definitions.h"
 	#include "../Flags.h"
@@ -49,9 +53,9 @@
 	#define SW_TYPE_LOW  		0x14
 
 	#define SW_VERSION_HIGH 	1
-	#define SW_VERSION_LOW  	10
+	#define SW_VERSION_LOW  	11
 
-	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6D	// 109
+	#define TMCM_EEPROM_MAGIC	(uint8_t)0x6E	// 111
 
 	#define WEASEL_SPI2_ON_PB13_PB14_PB15
 	#define DRAGON_SPI2_ON_PB13_PB14_PB15

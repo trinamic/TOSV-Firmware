@@ -188,7 +188,7 @@ void USART3_IRQHandler(void)
 	{
 		//Wenn RS485 gerade auf Senden geschaltet ist, dann ist
 		//es ein Echo, das hier ignoriert wird.
-		if(tmcm_isRS485Sending())
+		if(tmcm_isUartSending())
 		{
 			i=actualUart->DR;
 		}
@@ -213,7 +213,7 @@ void USART3_IRQHandler(void)
 	if(actualUart->SR & USART_FLAG_TXE)
 	{		if(UARTTxWritePtr!=UARTTxReadPtr)
 		{
-			tmcm_setRS485ToSendMode();
+			tmcm_setUartToSendMode();
 			actualUart->DR = UARTTxBuffer[UARTTxReadPtr++];
 			if(UARTTxReadPtr == UART_BUFFER_SIZE)
 				UARTTxReadPtr=0;
@@ -231,7 +231,7 @@ void USART3_IRQHandler(void)
 		USART_ClearITPendingBit(actualUart, USART_IT_TC);
 		if(UARTTxReadPtr == UARTTxWritePtr)
 		{
-			tmcm_setRS485ToReceiveMode();
+			tmcm_setUartToReceiveMode();
 		}
 	}
 }

@@ -48,6 +48,10 @@ int main(void)
 	uart_init(moduleConfig.baudrate);
 #endif
 
+#ifdef USE_RS485_INTERFACE
+	rs485_init(moduleConfig.baudrate);
+#endif
+
 #ifdef USE_USB_INTERFACE
 	usb_init();
 #endif

@@ -125,7 +125,12 @@
 	void tmcm_enableCsMem();
 	void tmcm_disableCsMem();
 
-	// UART/RS485 control
+	// UART control
+	extern void tmcm_setUartToSendMode();
+	extern void tmcm_setUartToReceiveMode();
+	extern uint8_t tmcm_isUartSending();
+
+	// RS485 control
 	extern void tmcm_setRS485ToSendMode();
 	extern void tmcm_setRS485ToReceiveMode();
 	extern uint8_t tmcm_isRS485Sending();

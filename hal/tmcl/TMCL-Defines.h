@@ -11,6 +11,8 @@
 	#define TCS_IDLE  			0
 	#define TCS_UART  			3
 	#define TCS_UART_ERROR 		4
+	#define TCS_RS485  			5
+	#define TCS_RS485_ERROR 	6
 	#define TCS_USB   			7
 	#define TCS_USB_ERROR 		8
 
