@@ -43,7 +43,7 @@
 	#define USBD_SERIALNUMBER_FS_STRING     "TMCEVAL"
 
 	#include "../../Definitions.h"
-	#include "../HAL_Definitions.h"
+	#include "../Hal_Definitions.h"
 	#include "../Flags.h"
 	#include "../../TOSV.h"
 

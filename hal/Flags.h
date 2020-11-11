@@ -8,7 +8,7 @@
 #ifndef FLAGS_H
 #define FLAGS_H
 
-	#include "HAL_Definitions.h"
+	#include "Hal_Definitions.h"
 
 	// error- and status flags
 	#define OVERCURRENT             0x00000001	// 0

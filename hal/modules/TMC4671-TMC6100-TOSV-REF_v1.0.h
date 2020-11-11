@@ -39,7 +39,7 @@
 	#define USE_USART3_ON_PB10_PB11
 
 	#include "../../Definitions.h"
-	#include "../HAL_Definitions.h"
+	#include "../Hal_Definitions.h"
 	#include "../Flags.h"
 	#include "../../TOSV.h"
 
